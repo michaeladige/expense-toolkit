@@ -8,12 +8,13 @@ Built with **React + TypeScript + Vite**. All of your data lives in the browser 
 expenses, categories, budgets, and settings are stored in `localStorage`, so
 nothing is sent to a server.
 
-> **One network exception:** live foreign-exchange rates are fetched from the
-> public, keyless [Frankfurter API](https://www.frankfurter.app/) (European
-> Central Bank data) to convert mixed-currency totals into your base currency.
-> Rates are cached in `localStorage`, so after the first successful load the app
-> keeps converting **offline**. If rates can't be reached at all, totals are
-> shown per currency and combined totals are marked approximate (`≈`).
+> **One network exception:** live foreign-exchange rates are fetched from a
+> public, keyless provider — [Frankfurter](https://frankfurter.dev/) (European
+> Central Bank data), with [open.er-api.com](https://www.exchangerate-api.com/docs/free)
+> as an automatic fallback — to convert mixed-currency totals into your base
+> currency. Rates are cached in `localStorage`, so after the first successful
+> load the app keeps converting **offline**. If no provider can be reached,
+> totals are shown per currency and combined totals are marked approximate (`≈`).
 
 ## Features
 
