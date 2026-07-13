@@ -7,14 +7,17 @@ import {
   isWithinRange,
   formatPeriodLabel,
   getRecentPeriods,
+  monthKey,
 } from "./lib/dates";
-import { sumByCategoryInBase, totalInBase } from "./lib/summary";
+import { sumByCategoryInBase, totalInBase, totalsByMonthInBase } from "./lib/summary";
+import { gradeSpending } from "./lib/grade";
 import { PeriodSelector } from "./components/PeriodSelector";
 import { ExpenseForm } from "./components/ExpenseForm";
 import { ExpenseList } from "./components/ExpenseList";
 import { SummaryCards } from "./components/SummaryCards";
 import { CategoryChart } from "./components/CategoryChart";
 import { TrendChart } from "./components/TrendChart";
+import { SpendingGrade } from "./components/SpendingGrade";
 import { BudgetPanel } from "./components/BudgetPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { UpdatePrompt } from "./components/UpdatePrompt";
@@ -72,6 +75,40 @@ export default function App() {
     const total = Object.values(byCategory).reduce((s, v) => s + v, 0);
     return { byCategory, total };
   }, [store.expenses, refDate, settings.baseCurrency, rates]);
+
+  // Resolves the target for the spending grade: an explicit Overall budget
+  // takes priority; otherwise falls back to the average total spend of prior
+  // months (relative to the viewed month, not wall-clock "today") that have
+  // at least one expense. Returns null when there's nothing to grade.
+  const spendingGrade = useMemo(() => {
+    const overallBudget = store.budgets.find((b) => b.categoryId === "all");
+
+    let target: number | null = null;
+    let targetSource: "budget" | "average" | null = null;
+
+    if (overallBudget) {
+      target = overallBudget.amount;
+      targetSource = "budget";
+    } else {
+      const currentMonthKey = monthKey(refDate);
+      const monthTotals = totalsByMonthInBase(
+        store.expenses,
+        settings.baseCurrency,
+        rates
+      );
+      const priorTotals = Object.entries(monthTotals)
+        .filter(([key]) => key < currentMonthKey)
+        .map(([, total]) => total);
+      if (priorTotals.length > 0) {
+        target = priorTotals.reduce((s, v) => s + v, 0) / priorTotals.length;
+        targetSource = "average";
+      }
+    }
+
+    if (target == null || targetSource == null) return null;
+    const grade = gradeSpending(monthData.total, target);
+    return grade ? { grade, target, targetSource } : null;
+  }, [store.budgets, store.expenses, refDate, settings.baseCurrency, rates, monthData.total]);
 
   // Spending totals for recent periods, for the trend chart.
   const trendBuckets = useMemo(() => {
@@ -170,6 +207,12 @@ export default function App() {
             <CategoryChart
               data={categorySlices}
               baseCurrency={settings.baseCurrency}
+            />
+            <SpendingGrade
+              info={spendingGrade}
+              monthTotal={monthData.total}
+              baseCurrency={settings.baseCurrency}
+              monthLabel={formatPeriodLabel("month", refDate)}
             />
             <BudgetPanel
               categories={store.categories}

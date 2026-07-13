@@ -31,6 +31,9 @@ nothing is sent to a server.
   8 weeks / 12 months), with the current period highlighted.
 - **Monthly budgets** — set overall or per-category limits and watch progress bars
   turn amber near the limit and red when exceeded.
+- **Spending grade** — a report-card letter grade (S/A/B/C/D/F) for the month,
+  scored against your Overall budget if you've set one, or your average
+  monthly spend otherwise.
 - **CSV import / export** — back up or move your data as a plain CSV (columns:
   `date, amount, currency, category, note`), and a "Clear all" reset.
 - **Installable / offline (PWA)** — install to your home screen or desktop, and

@@ -18,6 +18,14 @@ export function todayISO(): string {
   return toISODate(new Date());
 }
 
+/**
+ * "YYYY-MM" key for a Date's local month; directly comparable
+ * (lexicographic == chronological) with expense.date.slice(0, 7).
+ */
+export function monthKey(d: Date): string {
+  return toISODate(d).slice(0, 7);
+}
+
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
