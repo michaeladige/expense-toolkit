@@ -17,6 +17,7 @@ import { CategoryChart } from "./components/CategoryChart";
 import { TrendChart } from "./components/TrendChart";
 import { BudgetPanel } from "./components/BudgetPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { UpdatePrompt } from "./components/UpdatePrompt";
 import styles from "./App.module.css";
 
 const RATE_PILL: Record<RateStatus, { label: string; cls: string }> = {
@@ -202,6 +203,8 @@ export default function App() {
           onClose={() => setSettingsOpen(false)}
         />
       )}
+
+      <UpdatePrompt />
     </div>
   );
 }

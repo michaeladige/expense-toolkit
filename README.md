@@ -33,6 +33,8 @@ nothing is sent to a server.
   turn amber near the limit and red when exceeded.
 - **CSV import / export** — back up or move your data as a plain CSV (columns:
   `date, amount, currency, category, note`), and a "Clear all" reset.
+- **Installable / offline (PWA)** — install to your home screen or desktop, and
+  the app shell loads with no network at all after the first visit.
 
 ## Getting started
 
@@ -47,8 +49,9 @@ npm run dev      # start the dev server (http://localhost:5173)
 | --- | --- |
 | `npm run dev` | Start the Vite dev server. |
 | `npm run build` | Type-check and build for production into `dist/`. |
-| `npm run preview` | Preview the production build locally. |
+| `npm run preview` | Preview the production build locally, served under the same `/expense-toolkit/` base path GitHub Pages uses. |
 | `npm run typecheck` | Run the TypeScript compiler without emitting. |
+| `npm run icons` | Regenerate the PWA/favicon PNGs from `public/favicon.svg` and `scripts/icon-source-maskable.svg`. |
 
 ## Deployment (GitHub Pages)
 
@@ -74,3 +77,8 @@ Production builds use that repo path as their base (configured in
   import/export in `src/lib/csv.ts`.
 - FX rates are fetched and cached by `src/hooks/useExchangeRates.ts`.
 - Styling is plain CSS with CSS Modules and light/dark theming via CSS variables.
+- PWA support (manifest, service worker, offline app-shell caching) is provided
+  by `vite-plugin-pwa`, configured in `vite.config.ts`. Update notifications are
+  handled by `src/components/UpdatePrompt.tsx`. The service worker only
+  precaches the static app shell — the FX-rate cache above is a separate,
+  app-level mechanism, not duplicated by the service worker.
