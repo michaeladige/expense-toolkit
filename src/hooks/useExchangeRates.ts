@@ -5,9 +5,55 @@ import { useLocalStorage } from "../store/useLocalStorage";
 
 export type RateStatus = "idle" | "loading" | "live" | "cached" | "error";
 
-const API = "https://api.frankfurter.app/latest";
 /** Re-fetch if the cached rates for the current base are older than this. */
 const MAX_AGE_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+/**
+ * Keyless, CORS-enabled rate providers, tried in order. Both return rates as
+ * "units of currency X per 1 unit of `base`". We normalize to a RateMap and
+ * always add the base itself as 1. The first that succeeds wins, so a single
+ * provider outage doesn't take rates down.
+ */
+const PROVIDERS: {
+  name: string;
+  url: (base: string) => string;
+  parse: (json: unknown) => RateMap | undefined;
+}[] = [
+  {
+    name: "frankfurter",
+    url: (base) =>
+      `https://api.frankfurter.dev/v1/latest?base=${encodeURIComponent(base)}`,
+    parse: (json) => (json as { rates?: RateMap })?.rates,
+  },
+  {
+    name: "open.er-api",
+    url: (base) =>
+      `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,
+    parse: (json) => {
+      const j = json as { result?: string; rates?: RateMap };
+      return j?.result === "success" ? j.rates : undefined;
+    },
+  },
+];
+
+/** Try each provider until one returns a usable rate map. */
+async function fetchRateMap(base: string): Promise<RateMap> {
+  let lastError: unknown;
+  for (const provider of PROVIDERS) {
+    try {
+      const res = await fetch(provider.url(base));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const parsed = provider.parse(await res.json());
+      if (parsed && Object.keys(parsed).length > 0) {
+        return { ...parsed, [base]: 1 };
+      }
+      throw new Error("empty rates");
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError ?? new Error("no rate provider available");
+}
 
 interface UseExchangeRates {
   /** Currency -> units per 1 base unit; base itself is 1. Empty until loaded. */
@@ -18,9 +64,9 @@ interface UseExchangeRates {
 }
 
 /**
- * Fetch live FX rates for `base` from the keyless Frankfurter API and cache
- * them in localStorage. After a first successful fetch the app converts
- * offline using the cache; network failures fall back to whatever is cached.
+ * Fetch live FX rates for `base` from a keyless provider and cache them in
+ * localStorage. After a first successful fetch the app converts offline using
+ * the cache; network failures fall back to whatever is cached.
  */
 export function useExchangeRates(base: string): UseExchangeRates {
   const [cache, setCache] = useLocalStorage<CachedRates | null>(
@@ -43,14 +89,12 @@ export function useExchangeRates(base: string): UseExchangeRates {
 
       setStatus("loading");
       try {
-        const res = await fetch(`${API}?from=${encodeURIComponent(base)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as { rates: RateMap };
-        const rates: RateMap = { ...data.rates, [base]: 1 };
+        const rates = await fetchRateMap(base);
         setCache({ base, rates, fetchedAt: new Date().toISOString() });
         setStatus("live");
-      } catch {
-        // Offline or API error: keep using cache if we have it for this base.
+      } catch (err) {
+        // Offline or every provider failed: keep using cache if we have one.
+        console.warn("[rates] fetch failed:", err);
         setStatus(cacheValid ? "cached" : "error");
       }
     },
