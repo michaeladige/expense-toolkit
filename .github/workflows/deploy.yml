@@ -34,6 +34,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup Pages
+        # enablement: true asks GitHub to turn on Pages (Actions source) for the
+        # repo automatically, so the first deploy doesn't 404 when Pages was
+        # never enabled by hand. If org/repo policy forbids it, enable Pages
+        # manually under Settings → Pages → Source: GitHub Actions.
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - name: Build
         run: npm run build
 
