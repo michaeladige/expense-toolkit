@@ -57,6 +57,8 @@ export const CURRENCIES: { code: string; name: string }[] = [
   { code: "AUD", name: "Australian Dollar" },
   { code: "CNY", name: "Chinese Yuan" },
   { code: "INR", name: "Indian Rupee" },
+  { code: "IDR", name: "Indonesian Rupiah" },
+  { code: "TWD", name: "Taiwan Dollar" },
   { code: "BRL", name: "Brazilian Real" },
   { code: "MXN", name: "Mexican Peso" },
   { code: "SEK", name: "Swedish Krona" },
