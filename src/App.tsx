@@ -2,13 +2,19 @@ import { useMemo, useState } from "react";
 import type { Expense, PeriodType } from "./types";
 import { useExpenses } from "./store/ExpenseContext";
 import { useExchangeRates, type RateStatus } from "./hooks/useExchangeRates";
-import { getRange, isWithinRange, formatPeriodLabel } from "./lib/dates";
-import { sumByCategoryInBase } from "./lib/summary";
+import {
+  getRange,
+  isWithinRange,
+  formatPeriodLabel,
+  getRecentPeriods,
+} from "./lib/dates";
+import { sumByCategoryInBase, totalInBase } from "./lib/summary";
 import { PeriodSelector } from "./components/PeriodSelector";
 import { ExpenseForm } from "./components/ExpenseForm";
 import { ExpenseList } from "./components/ExpenseList";
 import { SummaryCards } from "./components/SummaryCards";
 import { CategoryChart } from "./components/CategoryChart";
+import { TrendChart } from "./components/TrendChart";
 import { BudgetPanel } from "./components/BudgetPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import styles from "./App.module.css";
@@ -65,6 +71,21 @@ export default function App() {
     const total = Object.values(byCategory).reduce((s, v) => s + v, 0);
     return { byCategory, total };
   }, [store.expenses, refDate, settings.baseCurrency, rates]);
+
+  // Spending totals for recent periods, for the trend chart.
+  const trendBuckets = useMemo(() => {
+    const counts: Record<PeriodType, number> = { day: 14, week: 8, month: 12 };
+    const buckets = getRecentPeriods(period, refDate, counts[period]);
+    const selected = getRange(period, refDate);
+    return buckets.map((b) => {
+      const inRange = store.expenses.filter((e) => isWithinRange(e.date, b));
+      return {
+        label: b.label,
+        total: totalInBase(inRange, settings.baseCurrency, rates).total,
+        current: b.start.getTime() === selected.start.getTime(),
+      };
+    });
+  }, [store.expenses, period, refDate, settings.baseCurrency, rates]);
 
   function handleSubmit(data: Omit<Expense, "id" | "createdAt">) {
     if (editing) {
@@ -140,6 +161,11 @@ export default function App() {
           </div>
 
           <div className={styles.col}>
+            <TrendChart
+              buckets={trendBuckets}
+              baseCurrency={settings.baseCurrency}
+              periodLabel={period}
+            />
             <CategoryChart
               data={categorySlices}
               baseCurrency={settings.baseCurrency}
@@ -169,6 +195,10 @@ export default function App() {
           onAddCategory={store.addCategory}
           onUpdateCategory={store.updateCategory}
           onDeleteCategory={store.deleteCategory}
+          expenses={store.expenses}
+          categoryById={store.categoryById}
+          onImport={store.importExpenses}
+          onClearAll={store.clearAllData}
           onClose={() => setSettingsOpen(false)}
         />
       )}

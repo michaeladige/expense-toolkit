@@ -26,8 +26,12 @@ nothing is sent to a server.
   and extendable in Settings.
 - **Spending chart** — a donut breakdown of spend-by-category for the selected
   period, with an interactive legend.
+- **Spending trend** — a bar chart of totals across recent periods (last 14 days /
+  8 weeks / 12 months), with the current period highlighted.
 - **Monthly budgets** — set overall or per-category limits and watch progress bars
   turn amber near the limit and red when exceeded.
+- **CSV import / export** — back up or move your data as a plain CSV (columns:
+  `date, amount, currency, category, note`), and a "Clear all" reset.
 
 ## Getting started
 
@@ -45,11 +49,27 @@ npm run dev      # start the dev server (http://localhost:5173)
 | `npm run preview` | Preview the production build locally. |
 | `npm run typecheck` | Run the TypeScript compiler without emitting. |
 
+## Deployment (GitHub Pages)
+
+This repo ships a GitHub Actions workflow (`.github/workflows/deploy.yml`) that
+builds the app and publishes it to GitHub Pages on every push to `main`.
+
+To enable it once:
+
+1. In the repository, go to **Settings → Pages** and set **Source** to
+   **GitHub Actions**.
+2. Merge to `main` (or run the workflow manually from the **Actions** tab).
+
+The app will be served at `https://<your-username>.github.io/expense-toolkit/`.
+Production builds use that repo path as their base (configured in
+`vite.config.ts`); the dev server keeps serving from `/`.
+
 ## Tech notes
 
 - State is held in a small React Context (`src/store/ExpenseContext.tsx`) backed by
   a `useLocalStorage` hook.
 - Currency conversion and formatting live in `src/lib/currency.ts`; period/date
-  math in `src/lib/dates.ts`; period summaries in `src/lib/summary.ts`.
+  math in `src/lib/dates.ts`; period summaries in `src/lib/summary.ts`; CSV
+  import/export in `src/lib/csv.ts`.
 - FX rates are fetched and cached by `src/hooks/useExchangeRates.ts`.
 - Styling is plain CSS with CSS Modules and light/dark theming via CSS variables.

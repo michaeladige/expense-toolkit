@@ -77,10 +77,39 @@ export function isWithinRange(dateISO: string, range: DateRange): boolean {
   return d >= range.start.getTime() && d <= range.end.getTime();
 }
 
-/** ISO date range for the calendar month containing `ref` (used by budgets). */
-export function monthKey(ref: Date): { start: string; end: string } {
-  const { start, end } = getRange("month", ref);
-  return { start: toISODate(start), end: toISODate(end) };
+export interface PeriodBucket extends DateRange {
+  /** Short axis label for the bucket. */
+  label: string;
+}
+
+/**
+ * The `count` most recent consecutive periods ending with the one containing
+ * `ref` (oldest first). Used by the spending trend chart.
+ */
+export function getRecentPeriods(
+  period: PeriodType,
+  ref: Date,
+  count: number
+): PeriodBucket[] {
+  const buckets: PeriodBucket[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    let cursor = ref;
+    for (let k = 0; k < i; k++) cursor = shiftPeriod(period, cursor, -1);
+    const range = getRange(period, cursor);
+    buckets.push({ ...range, label: formatBucketLabel(period, range.start) });
+  }
+  return buckets;
+}
+
+/** Compact label for a trend-chart bucket. */
+export function formatBucketLabel(period: PeriodType, start: Date): string {
+  if (period === "day") {
+    return start.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  }
+  if (period === "month") {
+    return start.toLocaleDateString(undefined, { month: "short" });
+  }
+  return start.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
 /** Human-friendly label for the current period selection. */

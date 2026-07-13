@@ -1,7 +1,8 @@
-import type { Category, Settings } from "../types";
+import type { Category, Expense, Settings } from "../types";
 import type { RateStatus } from "../hooks/useExchangeRates";
 import { CURRENCIES } from "../lib/constants";
 import { CategoryManager } from "./CategoryManager";
+import { DataControls } from "./DataControls";
 import styles from "./SettingsPanel.module.css";
 
 interface Props {
@@ -14,6 +15,10 @@ interface Props {
   onAddCategory: (data: Omit<Category, "id">) => void;
   onUpdateCategory: (id: string, data: Partial<Omit<Category, "id">>) => void;
   onDeleteCategory: (id: string) => void;
+  expenses: Expense[];
+  categoryById: (id: string) => Category | undefined;
+  onImport: (list: Omit<Expense, "id" | "createdAt">[]) => void;
+  onClearAll: () => void;
   onClose: () => void;
 }
 
@@ -35,6 +40,10 @@ export function SettingsPanel({
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
+  expenses,
+  categoryById,
+  onImport,
+  onClearAll,
   onClose,
 }: Props) {
   return (
@@ -106,6 +115,17 @@ export function SettingsPanel({
             onAdd={onAddCategory}
             onUpdate={onUpdateCategory}
             onDelete={onDeleteCategory}
+          />
+        </section>
+
+        <section className={styles.section}>
+          <h3 className={styles.subheading}>Data</h3>
+          <DataControls
+            expenses={expenses}
+            categories={categories}
+            categoryById={categoryById}
+            onImport={onImport}
+            onClearAll={onClearAll}
           />
         </section>
       </aside>

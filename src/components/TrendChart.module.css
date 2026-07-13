@@ -1,0 +1,43 @@
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+.head h2 {
+  margin-bottom: 0;
+}
+.headValue {
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.baseline {
+  stroke: var(--border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.bar {
+  fill: color-mix(in srgb, var(--primary) 40%, transparent);
+  transition: fill 0.15s ease;
+}
+.barCurrent {
+  fill: color-mix(in srgb, var(--primary) 70%, transparent);
+}
+.barActive {
+  fill: var(--primary);
+}
+
+.axisLabel {
+  fill: var(--text-muted);
+  font-size: 9px;
+}

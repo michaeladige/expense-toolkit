@@ -28,6 +28,8 @@ interface ExpenseStore {
   addExpense: (data: Omit<Expense, "id" | "createdAt">) => void;
   updateExpense: (id: string, data: Partial<Omit<Expense, "id">>) => void;
   deleteExpense: (id: string) => void;
+  importExpenses: (list: Omit<Expense, "id" | "createdAt">[]) => void;
+  clearAllData: () => void;
 
   addCategory: (data: Omit<Category, "id">) => void;
   updateCategory: (id: string, data: Partial<Omit<Category, "id">>) => void;
@@ -84,6 +86,26 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     (id: string) => setExpenses((prev) => prev.filter((e) => e.id !== id)),
     [setExpenses]
   );
+
+  const importExpenses = useCallback(
+    (list: Omit<Expense, "id" | "createdAt">[]) => {
+      const now = new Date().toISOString();
+      const created = list.map((d) => ({
+        ...d,
+        id: uid(),
+        createdAt: now,
+      }));
+      setExpenses((prev) => [...created, ...prev]);
+    },
+    [setExpenses]
+  );
+
+  const clearAllData = useCallback(() => {
+    setExpenses([]);
+    setBudgets([]);
+    setCategories(DEFAULT_CATEGORIES);
+    setSettings(DEFAULT_SETTINGS);
+  }, [setExpenses, setBudgets, setCategories, setSettings]);
 
   const addCategory = useCallback(
     (data: Omit<Category, "id">) =>
@@ -150,6 +172,8 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       addExpense,
       updateExpense,
       deleteExpense,
+      importExpenses,
+      clearAllData,
       addCategory,
       updateCategory,
       deleteCategory,
@@ -166,6 +190,8 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       addExpense,
       updateExpense,
       deleteExpense,
+      importExpenses,
+      clearAllData,
       addCategory,
       updateCategory,
       deleteCategory,
