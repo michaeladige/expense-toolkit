@@ -49,3 +49,21 @@ export function sumByCategoryInBase(
   }
   return out;
 }
+
+/**
+ * Total spend per "YYYY-MM" month key, converted to the base currency. Only
+ * months with at least one expense appear as keys.
+ */
+export function totalsByMonthInBase(
+  expenses: Expense[],
+  base: string,
+  rates: RateMap
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const e of expenses) {
+    const key = e.date.slice(0, 7);
+    const c = convert(e.amount, e.currency, base, rates) ?? e.amount;
+    out[key] = (out[key] ?? 0) + c;
+  }
+  return out;
+}
