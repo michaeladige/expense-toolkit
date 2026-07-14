@@ -66,6 +66,8 @@ jobs:
           mkdir -p pages-content
           cd pages-content
           git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -q -b gh-pages-content
           git commit -q --allow-empty -m "Initialize pages-content branch"
 
