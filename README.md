@@ -71,6 +71,27 @@ The app will be served at `https://<your-username>.github.io/expense-toolkit/`.
 Production builds use that repo path as their base (configured in
 `vite.config.ts`); the dev server keeps serving from `/`.
 
+### Beta previews for other branches
+
+Pushing to any branch other than `main` (`.github/workflows/deploy-beta.yml`)
+publishes a preview build to `https://<your-username>.github.io/expense-toolkit/beta/`.
+It's a single shared URL — pushing a different branch overwrites whichever
+preview was there before. Deleting the branch that's currently live at
+`/beta/` removes the preview automatically (`.github/workflows/cleanup-beta.yml`).
+
+GitHub Pages' Actions-based deploy always publishes a complete site, with no
+way to update just one subfolder. To let `main` and a beta branch coexist,
+both workflows read/write a plain git branch, `gh-pages-content`, that holds
+the full merged site tree (root = latest `main` build, `beta/` = latest
+branch-preview build) — each deploy updates only its own portion of that tree
+before publishing the whole thing. **`gh-pages-content` is not the Pages
+source** (Pages source stays "GitHub Actions" in Settings → Pages); it's only
+a staging branch these workflows use to hand a complete tree to
+`actions/deploy-pages` each time. The beta build sets `DEPLOY_BASE` (read by
+`vite.config.ts`) instead of only passing Vite's `--base` CLI flag, since the
+CLI flag alone rewrites `index.html`'s asset paths but not the PWA manifest's
+`start_url`/`scope`.
+
 ## Tech notes
 
 - State is held in a small React Context (`src/store/ExpenseContext.tsx`) backed by

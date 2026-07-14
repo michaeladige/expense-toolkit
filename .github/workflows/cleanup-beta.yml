@@ -1,0 +1,90 @@
+name: Clean up beta preview
+
+# Fires on any branch or tag deletion; the job itself filters to branches
+# (not tags) that aren't main or gh-pages-content.
+on:
+  delete:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Same group as deploy.yml / deploy-beta.yml — see the comment there.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    if: |
+      github.event.ref_type == 'branch' &&
+      github.event.ref != 'main' &&
+      github.event.ref != 'gh-pages-content'
+    runs-on: ubuntu-latest
+    outputs:
+      removed: ${{ steps.cleanup.outputs.removed }}
+    steps:
+      - name: Checkout pages-content branch
+        id: checkout_content
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages-content
+          path: pages-content
+          fetch-depth: 1
+
+      # Only remove beta/ if it currently belongs to the branch that was just
+      # deleted — a different, still-live branch may have redeployed to
+      # beta/ after this one, and we must not clobber that. The deleted-event
+      # payload's `ref` has been observed both as a bare branch name and as a
+      # fully-qualified "refs/heads/<name>" depending on context, so strip
+      # any such prefix before comparing rather than assuming one format.
+      - name: Remove beta preview if it belongs to the deleted branch
+        id: cleanup
+        if: steps.checkout_content.outcome == 'success'
+        run: |
+          deleted_ref="${{ github.event.ref }}"
+          deleted_branch="${deleted_ref#refs/heads/}"
+          if [ -f pages-content/beta/.deployed-branch ] && \
+             [ "$(cat pages-content/beta/.deployed-branch)" = "$deleted_branch" ]; then
+            rm -rf pages-content/beta
+            echo "removed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "removed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push pages-content
+        if: steps.cleanup.outputs.removed == 'true'
+        working-directory: pages-content
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git add -A
+          git commit -m "Remove stale beta preview for deleted branch ${{ github.event.ref }}"
+          git push origin HEAD:gh-pages-content
+
+      - name: Setup Pages
+        if: steps.cleanup.outputs.removed == 'true'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: steps.cleanup.outputs.removed == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages-content
+
+  deploy:
+    needs: cleanup
+    if: needs.cleanup.outputs.removed == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

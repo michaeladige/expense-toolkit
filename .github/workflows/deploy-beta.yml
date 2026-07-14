@@ -1,22 +1,18 @@
-name: Deploy to GitHub Pages
+name: Deploy beta preview
 
+# Any branch except main (and gh-pages-content itself — this workflow's own
+# push to that branch would otherwise re-trigger it in a loop).
 on:
-  # Deploy whenever the default branch updates.
   push:
-    branches: [main]
-  # Allow manual runs from the Actions tab.
+    branches-ignore: [main, gh-pages-content]
   workflow_dispatch:
 
-# Permissions the GITHUB_TOKEN needs to publish to Pages and to push the
-# merged site tree to the gh-pages-content branch (see below).
 permissions:
   contents: write
   pages: write
   id-token: write
 
-# Shared across deploy.yml / deploy-beta.yml / cleanup-beta.yml so they never
-# run concurrently and race on the gh-pages-content branch or the Pages
-# deployment itself.
+# Same group as deploy.yml / cleanup-beta.yml — see the comment there.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -38,24 +34,23 @@ jobs:
         run: npm ci
 
       - name: Setup Pages
-        # enablement: true asks GitHub to turn on Pages (Actions source) for the
-        # repo automatically, so the first deploy doesn't 404 when Pages was
-        # never enabled by hand. If org/repo policy forbids it, enable Pages
-        # manually under Settings → Pages → Source: GitHub Actions.
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
-      - name: Build
-        run: npm run build
+      - name: Type-check
+        run: npx tsc -b
 
-      # gh-pages-content is a plain git branch we use ONLY as a staging area
-      # for the full published site tree (root = main, beta/ = the latest
-      # branch-preview build from deploy-beta.yml). It is NOT the Pages
-      # source itself — Pages source stays "GitHub Actions" — this just lets
-      # a main deploy and a beta deploy coexist on the same live site without
-      # one wiping the other's output, since actions/deploy-pages always
-      # publishes a full artifact with no notion of "add this subfolder only".
+      # DEPLOY_BASE is read directly by vite.config.ts, not just passed as a
+      # `vite build --base` CLI flag — the CLI flag alone would correctly
+      # rewrite index.html's asset paths but NOT the PWA manifest's
+      # start_url/scope, which vite.config.ts computes from this env var at
+      # config-evaluation time.
+      - name: Build (beta base path)
+        env:
+          DEPLOY_BASE: /expense-toolkit/beta/
+        run: npx vite build
+
       - name: Checkout pages-content branch
         id: checkout_content
         uses: actions/checkout@v4
@@ -74,11 +69,16 @@ jobs:
           git checkout -q -b gh-pages-content
           git commit -q --allow-empty -m "Initialize pages-content branch"
 
-      # Sync main's fresh build into the root of the shared tree, leaving
-      # beta/ (a branch-preview deploy may have published there) untouched.
-      - name: Merge main build into shared site tree
+      # Replace only beta/ in the shared tree; main's root content (deployed
+      # by deploy.yml) is left untouched. This app has no dist-root file or
+      # folder literally named "beta", so this convention doesn't collide
+      # with anything main itself publishes.
+      - name: Merge beta build into shared site tree
         run: |
-          rsync -a --delete --exclude='/beta/' --exclude='/.git/' dist/ pages-content/
+          rm -rf pages-content/beta
+          mkdir -p pages-content/beta
+          rsync -a dist/ pages-content/beta/
+          echo "${{ github.ref_name }}" > pages-content/beta/.deployed-branch
 
       - name: Commit and push pages-content
         working-directory: pages-content
@@ -90,7 +90,7 @@ jobs:
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" 2>/dev/null || \
             git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
           git add -A
-          git commit -m "Deploy main @ ${{ github.sha }}" || echo "No changes to commit"
+          git commit -m "Deploy beta (${{ github.ref_name }}) @ ${{ github.sha }}" || echo "No changes to commit"
           git push origin HEAD:gh-pages-content
 
       - name: Upload Pages artifact

@@ -5,8 +5,14 @@ import { VitePWA } from "vite-plugin-pwa";
 // https://vitejs.dev/config/
 // On GitHub Pages the app is served from https://<user>.github.io/expense-toolkit/,
 // so production builds need that repo path as the base. Dev stays at "/".
+// DEPLOY_BASE lets CI override this for beta/branch-preview builds (e.g.
+// "/expense-toolkit/beta/") — it must be read here, not passed only via the
+// `vite build --base` CLI flag, because that flag overrides Vite's own asset
+// resolution but NOT the VitePWA manifest's start_url/scope below, which are
+// computed from this JS variable at config-evaluation time.
 export default defineConfig(({ command }) => {
-  const base = command === "build" ? "/expense-toolkit/" : "/";
+  const base =
+    command === "build" ? process.env.DEPLOY_BASE ?? "/expense-toolkit/" : "/";
 
   return {
     base,
