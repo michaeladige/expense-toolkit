@@ -179,3 +179,32 @@ button {
   text-align: center;
   padding: 1.5rem 0;
 }
+
+/*
+ * Bottom-right stack shared by every transient toast. Toasts are siblings in
+ * one flow container rather than each positioning itself, so two showing at
+ * once stack instead of landing on the same spot and occluding each other.
+ */
+.toast-stack {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+  pointer-events: none;
+}
+.toast-stack > * {
+  pointer-events: auto;
+  width: min(340px, calc(100vw - 2.5rem));
+  animation: toast-rise 0.2s ease;
+}
+
+@keyframes toast-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}

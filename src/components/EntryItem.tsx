@@ -1,19 +1,19 @@
-import type { Category, Expense, RateMap } from "../types";
+import type { Category, RateMap, TaggedEntry } from "../types";
 import { convert, formatMoney } from "../lib/currency";
 import { fromISODate } from "../lib/dates";
-import styles from "./ExpenseList.module.css";
+import styles from "./EntryList.module.css";
 
 interface Props {
-  expense: Expense;
+  entry: TaggedEntry;
   category: Category | undefined;
   baseCurrency: string;
   rates: RateMap;
-  onEdit: (e: Expense) => void;
-  onDelete: (id: string) => void;
+  onEdit: (e: TaggedEntry) => void;
+  onDelete: (e: TaggedEntry) => void;
 }
 
-export function ExpenseItem({
-  expense,
+export function EntryItem({
+  entry,
   category,
   baseCurrency,
   rates,
@@ -21,11 +21,13 @@ export function ExpenseItem({
   onDelete,
 }: Props) {
   const converted =
-    expense.currency !== baseCurrency
-      ? convert(expense.amount, expense.currency, baseCurrency, rates)
+    entry.currency !== baseCurrency
+      ? convert(entry.amount, entry.currency, baseCurrency, rates)
       : null;
 
+  const isIncome = entry.kind === "income";
   const color = category?.color ?? "var(--text-muted)";
+  const noun = isIncome ? "income" : "expense";
 
   return (
     <li className={styles.item}>
@@ -38,21 +40,22 @@ export function ExpenseItem({
       </span>
 
       <div className={styles.main}>
-        <span className={styles.title}>
-          {category?.name ?? "Uncategorized"}
-        </span>
+        <span className={styles.title}>{category?.name ?? "Uncategorized"}</span>
         <span className={styles.sub}>
-          {fromISODate(expense.date).toLocaleDateString(undefined, {
+          {fromISODate(entry.date).toLocaleDateString(undefined, {
             month: "short",
             day: "numeric",
           })}
-          {expense.note ? ` · ${expense.note}` : ""}
+          {entry.note ? ` · ${entry.note}` : ""}
         </span>
       </div>
 
       <div className={styles.amount}>
-        <span className={styles.primaryAmount}>
-          {formatMoney(expense.amount, expense.currency)}
+        <span
+          className={`${styles.primaryAmount} ${isIncome ? styles.incomeAmount : ""}`}
+        >
+          {isIncome ? "+" : "−"}
+          {formatMoney(entry.amount, entry.currency)}
         </span>
         {converted != null && (
           <span className={styles.convertedAmount}>
@@ -64,15 +67,15 @@ export function ExpenseItem({
       <div className={styles.rowActions}>
         <button
           className="btn btn-ghost btn-icon"
-          aria-label="Edit expense"
-          onClick={() => onEdit(expense)}
+          aria-label={`Edit ${noun}`}
+          onClick={() => onEdit(entry)}
         >
           ✎
         </button>
         <button
           className="btn btn-ghost btn-icon btn-danger"
-          aria-label="Delete expense"
-          onClick={() => onDelete(expense.id)}
+          aria-label={`Delete ${noun}`}
+          onClick={() => onDelete(entry)}
         >
           ✕
         </button>

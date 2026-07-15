@@ -1,6 +1,7 @@
-import type { Category, Expense } from "../types";
+import type { Category, Expense, Income } from "../types";
+import { OTHER_EXPENSE_ID, OTHER_INCOME_ID } from "./constants";
 
-const HEADERS = ["date", "amount", "currency", "category", "note"] as const;
+const HEADERS = ["date", "type", "amount", "currency", "category", "note"] as const;
 
 function escapeCell(value: string): string {
   if (/[",\n]/.test(value)) {
@@ -9,22 +10,39 @@ function escapeCell(value: string): string {
   return value;
 }
 
-/** Serialize expenses to CSV, writing human-readable category names. */
-export function expensesToCSV(
+type CategoryLookup = (id: string) => Category | undefined;
+
+/**
+ * Serialize expenses and income to CSV, writing human-readable category names.
+ * Rows are tagged in a "type" column; see `csvToEntries` for how files written
+ * before income existed are still read back.
+ */
+export function entriesToCSV(
   expenses: Expense[],
-  categoryById: (id: string) => Category | undefined
+  incomes: Income[],
+  categoryById: CategoryLookup,
+  incomeCategoryById: CategoryLookup
 ): string {
   const rows = [HEADERS.join(",")];
-  for (const e of expenses) {
-    const cells = [
-      e.date,
-      String(e.amount),
-      e.currency,
-      categoryById(e.categoryId)?.name ?? e.categoryId,
-      e.note ?? "",
-    ];
-    rows.push(cells.map(escapeCell).join(","));
-  }
+  const write = (
+    list: (Expense | Income)[],
+    kind: string,
+    lookup: CategoryLookup
+  ) => {
+    for (const e of list) {
+      const cells = [
+        e.date,
+        kind,
+        String(e.amount),
+        e.currency,
+        lookup(e.categoryId)?.name ?? e.categoryId,
+        e.note ?? "",
+      ];
+      rows.push(cells.map(escapeCell).join(","));
+    }
+  };
+  write(expenses, "expense", categoryById);
+  write(incomes, "income", incomeCategoryById);
   return rows.join("\n");
 }
 
@@ -61,16 +79,22 @@ function parseLine(line: string): string[] {
 
 export interface ParsedImport {
   expenses: Omit<Expense, "id" | "createdAt">[];
+  incomes: Omit<Income, "id" | "createdAt">[];
   errors: string[];
 }
 
 /**
- * Parse CSV text back into expense drafts. Category names are matched to
- * existing categories (case-insensitive); unknown ones fall back to "other".
+ * Parse CSV text back into expense and income drafts. Category names are
+ * matched to that side's existing categories (case-insensitive); unknown ones
+ * fall back to the side's "Other".
+ *
+ * A file with no "type" column is read as all-expenses: that's the format this
+ * app exported before income existed, and those backups must still restore.
  */
-export function csvToExpenses(
+export function csvToEntries(
   text: string,
-  categories: Category[]
+  categories: Category[],
+  incomeCategories: Category[]
 ): ParsedImport {
   const lines = text
     .split(/\r?\n/)
@@ -78,11 +102,13 @@ export function csvToExpenses(
     .filter(Boolean);
   const errors: string[] = [];
   const expenses: Omit<Expense, "id" | "createdAt">[] = [];
-  if (lines.length === 0) return { expenses, errors: ["File is empty."] };
+  const incomes: Omit<Income, "id" | "createdAt">[] = [];
+  if (lines.length === 0) return { expenses, incomes, errors: ["File is empty."] };
 
   const header = parseLine(lines[0]).map((h) => h.trim().toLowerCase());
   const idx = (name: string) => header.indexOf(name);
   const iDate = idx("date");
+  const iType = idx("type");
   const iAmount = idx("amount");
   const iCurrency = idx("currency");
   const iCategory = idx("category");
@@ -90,11 +116,15 @@ export function csvToExpenses(
   if (iDate < 0 || iAmount < 0 || iCurrency < 0) {
     return {
       expenses,
+      incomes,
       errors: ['Missing required columns: "date", "amount", "currency".'],
     };
   }
 
   const byName = new Map(categories.map((c) => [c.name.toLowerCase(), c.id]));
+  const incomeByName = new Map(
+    incomeCategories.map((c) => [c.name.toLowerCase(), c.id])
+  );
 
   for (let i = 1; i < lines.length; i++) {
     const cells = parseLine(lines[i]);
@@ -113,17 +143,28 @@ export function csvToExpenses(
       errors.push(`Row ${i + 1}: missing currency.`);
       continue;
     }
+
+    const rawType = (iType >= 0 ? cells[iType] ?? "" : "").trim().toLowerCase();
+    if (iType >= 0 && rawType && rawType !== "expense" && rawType !== "income") {
+      errors.push(`Row ${i + 1}: unknown type "${rawType}".`);
+      continue;
+    }
+    const isIncome = rawType === "income";
+
     const catName = (iCategory >= 0 ? cells[iCategory] ?? "" : "").trim();
-    const categoryId = byName.get(catName.toLowerCase()) ?? "other";
     const note = iNote >= 0 ? (cells[iNote] ?? "").trim() : "";
-    expenses.push({
+    const draft = {
       date,
       amount,
       currency,
-      categoryId,
+      categoryId: isIncome
+        ? incomeByName.get(catName.toLowerCase()) ?? OTHER_INCOME_ID
+        : byName.get(catName.toLowerCase()) ?? OTHER_EXPENSE_ID,
       note: note || undefined,
-    });
+    };
+    if (isIncome) incomes.push(draft);
+    else expenses.push(draft);
   }
 
-  return { expenses, errors };
+  return { expenses, incomes, errors };
 }

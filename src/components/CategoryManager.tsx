@@ -5,6 +5,8 @@ import styles from "./CategoryManager.module.css";
 
 interface Props {
   categories: Category[];
+  /** The catch-all category deleted entries fall back to; can't itself be deleted. */
+  protectedId: string;
   onAdd: (data: Omit<Category, "id">) => void;
   onUpdate: (id: string, data: Partial<Omit<Category, "id">>) => void;
   onDelete: (id: string) => void;
@@ -12,6 +14,7 @@ interface Props {
 
 export function CategoryManager({
   categories,
+  protectedId,
   onAdd,
   onUpdate,
   onDelete,
@@ -61,9 +64,9 @@ export function CategoryManager({
             <button
               className="btn btn-ghost btn-icon btn-danger"
               aria-label={`Delete ${c.name}`}
-              disabled={c.id === "other"}
+              disabled={c.id === protectedId}
               title={
-                c.id === "other"
+                c.id === protectedId
                   ? "The default fallback category can't be deleted"
                   : "Delete category"
               }

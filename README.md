@@ -1,12 +1,13 @@
 # expense-toolkit
 
-A money management app for tracking expenses across **day / week / month**, with
-**multiple categories**, **multiple currencies**, spending **charts**, and monthly
-**budgets**.
+A money management app for tracking **expenses and income** across
+**day / week / month**, with **multiple categories** on each side, **multiple
+currencies**, spending **charts**, monthly **budgets**, and automatic
+**weekly/monthly reports**.
 
 Built with **React + TypeScript + Vite**. All of your data lives in the browser —
-expenses, categories, budgets, and settings are stored in `localStorage`, so
-nothing is sent to a server.
+expenses, income, categories, budgets, reports, and settings are stored in
+`localStorage`, so nothing is sent to a server.
 
 > **One network exception:** live foreign-exchange rates are fetched from a
 > public, keyless provider — [Frankfurter](https://frankfurter.dev/) (European
@@ -18,13 +19,19 @@ nothing is sent to a server.
 
 ## Features
 
-- **Add / edit / delete expenses** — amount, currency, category, date, and an
-  optional note.
+- **Add / edit / delete transactions** — expenses *and* income, each with an
+  amount, currency, category, date, and an optional note. One form with an
+  Expense/Income toggle; one list with an All/Expenses/Income filter.
 - **Day / Week / Month views** with previous/next navigation and a "Today" jump.
-- **Multiple currencies** — each expense keeps its own currency; the summary shows
+- **Income vs. expenses** — the summary shows income, expenses, and **net** for
+  the selected period.
+- **Multiple currencies** — each entry keeps its own currency; the summary shows
   per-currency subtotals **and** a single total converted to your base currency.
-- **Categories** — seven color-coded defaults, fully editable (name, icon, color)
-  and extendable in Settings.
+- **Categories** — separate, independently editable sets for expenses and income
+  (name, icon, color), both extendable in Settings.
+- **Automatic weekly & monthly reports** — a report is written for each week and
+  month that finishes, with income, expenses, net, the change vs. the previous
+  period, and a category breakdown. See [Reports and notifications](#reports-and-notifications).
 - **Spending chart** — a donut breakdown of spend-by-category for the selected
   period, with an interactive legend.
 - **Spending trend** — a bar chart of totals across recent periods (last 14 days /
@@ -35,9 +42,35 @@ nothing is sent to a server.
   scored against your Overall budget if you've set one, or your average
   monthly spend otherwise.
 - **CSV import / export** — back up or move your data as a plain CSV (columns:
-  `date, amount, currency, category, note`), and a "Clear all" reset.
+  `date, type, amount, currency, category, note`), and a "Clear all" reset.
+  Files exported before income existed (no `type` column) still import fine, as
+  all-expenses.
 - **Installable / offline (PWA)** — install to your home screen or desktop, and
   the app shell loads with no network at all after the first visit.
+
+## Reports and notifications
+
+A report is generated for every week and month that finishes, stored locally,
+and browsable under **Reports**. Each one is a frozen snapshot — totals and
+category names are recorded as they were at the time, so a past report doesn't
+change value when exchange rates move or you rename a category. Periods in which
+you recorded nothing are skipped.
+
+**Reports are produced when you next open the app, not at the moment the period
+ends.** This is a real limitation, not a temporary one:
+
+- The app has no backend and your data never leaves the browser, so no server
+  exists that *could* generate a report or send you one — it has no access to
+  your data by design.
+- Browsers give a web app no way to run code at a scheduled time while it's
+  closed.
+
+So if a month ends on Friday and you next open the app on Monday, the report is
+written on Monday. Nothing is ever skipped — it may just arrive late. Opting in
+to notifications (Settings → Reports) additionally fires a system notification
+when reports are generated; an in-app message is always shown regardless, so you
+still find out if notifications are off, blocked, or unsupported. On iOS,
+notifications require the app to be installed to the home screen first.
 
 ## Getting started
 
@@ -77,7 +110,12 @@ Production builds use that repo path as their base (configured in
   a `useLocalStorage` hook.
 - Currency conversion and formatting live in `src/lib/currency.ts`; period/date
   math in `src/lib/dates.ts`; period summaries in `src/lib/summary.ts`; CSV
-  import/export in `src/lib/csv.ts`.
+  import/export in `src/lib/csv.ts`; report snapshots in `src/lib/reports.ts`.
+- Expenses and income share an `Entry` base type, so the aggregation helpers in
+  `src/lib/summary.ts` serve both rather than being duplicated per side.
+- Report catch-up runs in `src/hooks/useAutoReports.ts`; notification delivery is
+  wrapped in `src/lib/notify.ts` (which routes through the service worker,
+  because `new Notification()` throws on Android Chrome).
 - FX rates are fetched and cached by `src/hooks/useExchangeRates.ts`.
 - Styling is plain CSS with CSS Modules and light/dark theming via CSS variables.
 - PWA support (manifest, service worker, offline app-shell caching) is provided

@@ -1,6 +1,8 @@
-import type { Category, Expense, Settings } from "../types";
+import { useState } from "react";
+import type { Category, Expense, Income, Settings } from "../types";
 import type { RateStatus } from "../hooks/useExchangeRates";
-import { CURRENCIES } from "../lib/constants";
+import { CURRENCIES, OTHER_EXPENSE_ID, OTHER_INCOME_ID } from "../lib/constants";
+import { permission, requestPermission, supported } from "../lib/notify";
 import { CategoryManager } from "./CategoryManager";
 import { DataControls } from "./DataControls";
 import styles from "./SettingsPanel.module.css";
@@ -15,9 +17,16 @@ interface Props {
   onAddCategory: (data: Omit<Category, "id">) => void;
   onUpdateCategory: (id: string, data: Partial<Omit<Category, "id">>) => void;
   onDeleteCategory: (id: string) => void;
+  incomeCategories: Category[];
+  onAddIncomeCategory: (data: Omit<Category, "id">) => void;
+  onUpdateIncomeCategory: (id: string, data: Partial<Omit<Category, "id">>) => void;
+  onDeleteIncomeCategory: (id: string) => void;
   expenses: Expense[];
+  incomes: Income[];
   categoryById: (id: string) => Category | undefined;
-  onImport: (list: Omit<Expense, "id" | "createdAt">[]) => void;
+  incomeCategoryById: (id: string) => Category | undefined;
+  onImportExpenses: (list: Omit<Expense, "id" | "createdAt">[]) => void;
+  onImportIncomes: (list: Omit<Income, "id" | "createdAt">[]) => void;
   onClearAll: () => void;
   onClose: () => void;
 }
@@ -40,12 +49,28 @@ export function SettingsPanel({
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
+  incomeCategories,
+  onAddIncomeCategory,
+  onUpdateIncomeCategory,
+  onDeleteIncomeCategory,
   expenses,
+  incomes,
   categoryById,
-  onImport,
+  incomeCategoryById,
+  onImportExpenses,
+  onImportIncomes,
   onClearAll,
   onClose,
 }: Props) {
+  const [perm, setPerm] = useState(permission);
+
+  /** Permission must be requested from a user gesture — iOS Safari rejects it otherwise. */
+  async function enableNotifications() {
+    const result = await requestPermission();
+    setPerm(result);
+    onUpdateSettings({ notificationsEnabled: result === "granted" });
+  }
+
   return (
     <>
       <div className={styles.scrim} onClick={onClose} />
@@ -109,9 +134,53 @@ export function SettingsPanel({
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.subheading}>Categories</h3>
+          <h3 className={styles.subheading}>Reports</h3>
+          <div className={styles.rates}>
+            <span>
+              {perm === "granted" && settings.notificationsEnabled
+                ? "Notifications on"
+                : perm === "denied"
+                  ? "Notifications blocked in your browser"
+                  : perm === "unsupported"
+                    ? "Notifications unavailable here"
+                    : "Notifications off"}
+            </span>
+            {perm === "granted" ? (
+              <button
+                className="btn"
+                onClick={() =>
+                  onUpdateSettings({
+                    notificationsEnabled: !settings.notificationsEnabled,
+                  })
+                }
+              >
+                {settings.notificationsEnabled ? "Turn off" : "Turn on"}
+              </button>
+            ) : (
+              <button
+                className="btn"
+                onClick={enableNotifications}
+                disabled={perm !== "default"}
+              >
+                Enable
+              </button>
+            )}
+          </div>
+          <p className="muted" style={{ fontSize: "0.8rem" }}>
+            A report is written for each week and month that finishes. Because
+            everything runs in your browser with no server, reports are produced
+            the next time you open the app rather than at the moment the period
+            ends — nothing is ever skipped, it may just arrive late.
+            {!supported() &&
+              " Your browser doesn't offer notifications here; on iOS, add the app to your home screen first."}
+          </p>
+        </section>
+
+        <section className={styles.section}>
+          <h3 className={styles.subheading}>Expense categories</h3>
           <CategoryManager
             categories={categories}
+            protectedId={OTHER_EXPENSE_ID}
             onAdd={onAddCategory}
             onUpdate={onUpdateCategory}
             onDelete={onDeleteCategory}
@@ -119,12 +188,27 @@ export function SettingsPanel({
         </section>
 
         <section className={styles.section}>
+          <h3 className={styles.subheading}>Income categories</h3>
+          <CategoryManager
+            categories={incomeCategories}
+            protectedId={OTHER_INCOME_ID}
+            onAdd={onAddIncomeCategory}
+            onUpdate={onUpdateIncomeCategory}
+            onDelete={onDeleteIncomeCategory}
+          />
+        </section>
+
+        <section className={styles.section}>
           <h3 className={styles.subheading}>Data</h3>
           <DataControls
             expenses={expenses}
+            incomes={incomes}
             categories={categories}
+            incomeCategories={incomeCategories}
             categoryById={categoryById}
-            onImport={onImport}
+            incomeCategoryById={incomeCategoryById}
+            onImportExpenses={onImportExpenses}
+            onImportIncomes={onImportIncomes}
             onClearAll={onClearAll}
           />
         </section>

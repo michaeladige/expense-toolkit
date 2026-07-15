@@ -1,4 +1,4 @@
-import type { PeriodType } from "../types";
+import type { PeriodType, ReportPeriod } from "../types";
 
 /** Format a Date as a local "YYYY-MM-DD" string. */
 export function toISODate(d: Date): string {
@@ -68,6 +68,22 @@ export function getRange(period: PeriodType, ref: Date): DateRange {
       return { start: s, end: e };
     }
   }
+}
+
+/**
+ * Key for the week containing `d`, as "W" + the week's Monday ("W2026-07-13").
+ *
+ * Deliberately not an ISO week number: deriving the key from the same
+ * Monday-start `getRange` the rest of the app uses sidesteps the ISO
+ * week-numbering year-boundary rules, and still sorts chronologically.
+ */
+export function weekKey(d: Date): string {
+  return `W${toISODate(getRange("week", d).start)}`;
+}
+
+/** Stable, chronologically sortable key identifying a report's period. */
+export function periodKey(period: ReportPeriod, d: Date): string {
+  return period === "month" ? monthKey(d) : weekKey(d);
 }
 
 /** Move the reference date forward/backward by one period. */

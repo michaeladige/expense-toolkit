@@ -3,10 +3,21 @@ import type { Category, Settings } from "../types";
 export const STORAGE_KEYS = {
   expenses: "expense-toolkit:expenses",
   categories: "expense-toolkit:categories",
+  income: "expense-toolkit:income",
+  incomeCategories: "expense-toolkit:income-categories",
   budgets: "expense-toolkit:budgets",
+  reports: "expense-toolkit:reports",
   settings: "expense-toolkit:settings",
   rates: "expense-toolkit:rates",
 } as const;
+
+/**
+ * Catch-all category ids. Deleting a category reassigns its entries here, and
+ * CSV import falls back to these for unrecognised category names — so each side
+ * needs one that always exists.
+ */
+export const OTHER_EXPENSE_ID = "other";
+export const OTHER_INCOME_ID = "inc-other";
 
 /**
  * Seed categories. Colors are a distinct, reasonably colorblind-aware
@@ -20,7 +31,21 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: "health", name: "Health", color: "#ef4444", icon: "💊" },
   { id: "shopping", name: "Shopping", color: "#ec4899", icon: "🛍️" },
   { id: "gaming", name: "Gaming", color: "#06b6d4", icon: "🎮" },
-  { id: "other", name: "Other", color: "#64748b", icon: "📦" },
+  { id: OTHER_EXPENSE_ID, name: "Other", color: "#64748b", icon: "📦" },
+];
+
+/**
+ * Seed income categories. Ids are "inc-" prefixed so they can never collide
+ * with an expense category id — the two lists are stored separately, but ids
+ * also travel through CSV rows and report snapshots where a clash would be
+ * ambiguous.
+ */
+export const DEFAULT_INCOME_CATEGORIES: Category[] = [
+  { id: "inc-salary", name: "Salary", color: "#10b981", icon: "💼" },
+  { id: "inc-freelance", name: "Freelance", color: "#3b82f6", icon: "🧑‍💻" },
+  { id: "inc-investment", name: "Investments", color: "#8b5cf6", icon: "📈" },
+  { id: "inc-gift", name: "Gifts", color: "#ec4899", icon: "🎁" },
+  { id: OTHER_INCOME_ID, name: "Other", color: "#64748b", icon: "📦" },
 ];
 
 export const DEFAULT_SETTINGS: Settings = {

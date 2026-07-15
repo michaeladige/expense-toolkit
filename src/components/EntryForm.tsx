@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
-import type { Category, Expense } from "../types";
-import { CURRENCIES } from "../lib/constants";
+import type { Category, EntryKind, Expense, TaggedEntry } from "../types";
+import { CURRENCIES, OTHER_EXPENSE_ID } from "../lib/constants";
 import { todayISO } from "../lib/dates";
-import styles from "./ExpenseForm.module.css";
+import styles from "./EntryForm.module.css";
 
 interface Props {
   categories: Category[];
+  incomeCategories: Category[];
   defaultCurrency: string;
-  editing: Expense | null;
-  onSubmit: (data: Omit<Expense, "id" | "createdAt">) => void;
+  editing: TaggedEntry | null;
+  onSubmit: (kind: EntryKind, data: Omit<Expense, "id" | "createdAt">) => void;
   onCancelEdit: () => void;
 }
 
 interface FormState {
+  kind: EntryKind;
   amount: string;
   currency: string;
   categoryId: string;
@@ -20,30 +22,45 @@ interface FormState {
   note: string;
 }
 
-function blank(categories: Category[], currency: string): FormState {
+/** `kindCategories` must be the list for `kind`, not the expense list. */
+function blank(
+  kind: EntryKind,
+  kindCategories: Category[],
+  currency: string
+): FormState {
   return {
+    kind,
     amount: "",
     currency,
-    categoryId: categories[0]?.id ?? "other",
+    categoryId: kindCategories[0]?.id ?? OTHER_EXPENSE_ID,
     date: todayISO(),
     note: "",
   };
 }
 
-export function ExpenseForm({
+export function EntryForm({
   categories,
+  incomeCategories,
   defaultCurrency,
   editing,
   onSubmit,
   onCancelEdit,
 }: Props) {
+  /** Each side has its own categories; a form field must never mix them. */
+  const listFor = (kind: EntryKind) =>
+    kind === "income" ? incomeCategories : categories;
+
   const [form, setForm] = useState<FormState>(() =>
-    blank(categories, defaultCurrency)
+    blank("expense", categories, defaultCurrency)
   );
+
+  const isIncome = form.kind === "income";
+  const activeCategories = listFor(form.kind);
 
   useEffect(() => {
     if (editing) {
       setForm({
+        kind: editing.kind,
         amount: String(editing.amount),
         currency: editing.currency,
         categoryId: editing.categoryId,
@@ -51,7 +68,7 @@ export function ExpenseForm({
         note: editing.note ?? "",
       });
     } else {
-      setForm(blank(categories, defaultCurrency));
+      setForm((f) => blank(f.kind, listFor(f.kind), defaultCurrency));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing, defaultCurrency]);
@@ -60,11 +77,20 @@ export function ExpenseForm({
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  /** Switching side must also move the category to one that exists on that side. */
+  function switchKind(kind: EntryKind) {
+    setForm((f) => ({
+      ...f,
+      kind,
+      categoryId: listFor(kind)[0]?.id ?? OTHER_EXPENSE_ID,
+    }));
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const amount = parseFloat(form.amount);
     if (!Number.isFinite(amount) || amount <= 0) return;
-    onSubmit({
+    onSubmit(form.kind, {
       amount,
       currency: form.currency,
       categoryId: form.categoryId,
@@ -72,13 +98,38 @@ export function ExpenseForm({
       note: form.note.trim() || undefined,
     });
     if (!editing) {
-      setForm((f) => ({ ...blank(categories, f.currency), date: f.date }));
+      setForm((f) => ({ ...blank(f.kind, listFor(f.kind), f.currency), date: f.date }));
     }
   }
 
+  const noun = isIncome ? "income" : "expense";
+
   return (
     <form className={`card ${styles.form}`} onSubmit={handleSubmit}>
-      <h2>{editing ? "Edit expense" : "Add expense"}</h2>
+      <h2>{editing ? `Edit ${noun}` : `Add ${noun}`}</h2>
+
+      {/* Kind is fixed while editing: moving an entry across sides also means
+          re-categorising it, so that's a delete-and-re-add, not a toggle. */}
+      {!editing && (
+        <div className={styles.kindToggle} role="group" aria-label="Entry type">
+          <button
+            type="button"
+            className={`${styles.kindBtn} ${!isIncome ? styles.kindActive : ""}`}
+            aria-pressed={!isIncome}
+            onClick={() => switchKind("expense")}
+          >
+            Expense
+          </button>
+          <button
+            type="button"
+            className={`${styles.kindBtn} ${isIncome ? styles.kindActiveIncome : ""}`}
+            aria-pressed={isIncome}
+            onClick={() => switchKind("income")}
+          >
+            Income
+          </button>
+        </div>
+      )}
 
       <div className={styles.amountRow}>
         <div className="field">
@@ -121,7 +172,7 @@ export function ExpenseForm({
           value={form.categoryId}
           onChange={(e) => update("categoryId", e.target.value)}
         >
-          {categories.map((c) => (
+          {activeCategories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.icon ? `${c.icon} ` : ""}
               {c.name}
@@ -148,7 +199,7 @@ export function ExpenseForm({
           id="note"
           className="input"
           type="text"
-          placeholder="e.g. Lunch with team"
+          placeholder={isIncome ? "e.g. March salary" : "e.g. Lunch with team"}
           value={form.note}
           onChange={(e) => update("note", e.target.value)}
         />
@@ -156,7 +207,7 @@ export function ExpenseForm({
 
       <div className={styles.actions}>
         <button type="submit" className="btn btn-primary">
-          {editing ? "Save changes" : "Add expense"}
+          {editing ? "Save changes" : `Add ${noun}`}
         </button>
         {editing && (
           <button type="button" className="btn" onClick={onCancelEdit}>

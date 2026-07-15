@@ -1,34 +1,42 @@
 import { useRef, useState } from "react";
-import type { Category, Expense } from "../types";
-import { csvToExpenses, expensesToCSV } from "../lib/csv";
+import type { Category, Expense, Income } from "../types";
+import { csvToEntries, entriesToCSV } from "../lib/csv";
 import { todayISO } from "../lib/dates";
 import styles from "./DataControls.module.css";
 
 interface Props {
   expenses: Expense[];
+  incomes: Income[];
   categories: Category[];
+  incomeCategories: Category[];
   categoryById: (id: string) => Category | undefined;
-  onImport: (list: Omit<Expense, "id" | "createdAt">[]) => void;
+  incomeCategoryById: (id: string) => Category | undefined;
+  onImportExpenses: (list: Omit<Expense, "id" | "createdAt">[]) => void;
+  onImportIncomes: (list: Omit<Income, "id" | "createdAt">[]) => void;
   onClearAll: () => void;
 }
 
 export function DataControls({
   expenses,
+  incomes,
   categories,
+  incomeCategories,
   categoryById,
-  onImport,
+  incomeCategoryById,
+  onImportExpenses,
+  onImportIncomes,
   onClearAll,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   function handleExport() {
-    const csv = expensesToCSV(expenses, categoryById);
+    const csv = entriesToCSV(expenses, incomes, categoryById, incomeCategoryById);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `expenses-${todayISO()}.csv`;
+    a.download = `expense-toolkit-${todayISO()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -38,12 +46,16 @@ export function DataControls({
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const { expenses: parsed, errors } = csvToExpenses(
-        String(reader.result),
-        categories
-      );
-      if (parsed.length > 0) onImport(parsed);
-      const parts = [`Imported ${parsed.length} expense(s).`];
+      const {
+        expenses: parsedExpenses,
+        incomes: parsedIncomes,
+        errors,
+      } = csvToEntries(String(reader.result), categories, incomeCategories);
+      if (parsedExpenses.length > 0) onImportExpenses(parsedExpenses);
+      if (parsedIncomes.length > 0) onImportIncomes(parsedIncomes);
+      const parts = [
+        `Imported ${parsedExpenses.length} expense(s), ${parsedIncomes.length} income(s).`,
+      ];
       if (errors.length) parts.push(`${errors.length} row(s) skipped.`);
       setMessage(parts.join(" "));
     };
@@ -54,7 +66,7 @@ export function DataControls({
   function handleClear() {
     if (
       window.confirm(
-        "Delete all expenses and budgets and reset categories? This can't be undone."
+        "Delete all transactions, budgets and reports, and reset categories? This can't be undone."
       )
     ) {
       onClearAll();
@@ -62,14 +74,12 @@ export function DataControls({
     }
   }
 
+  const isEmpty = expenses.length === 0 && incomes.length === 0;
+
   return (
     <div className={styles.wrap}>
       <div className={styles.buttons}>
-        <button
-          className="btn"
-          onClick={handleExport}
-          disabled={expenses.length === 0}
-        >
+        <button className="btn" onClick={handleExport} disabled={isEmpty}>
           ⬇ Export CSV
         </button>
         <button className="btn" onClick={() => fileRef.current?.click()}>
@@ -88,7 +98,8 @@ export function DataControls({
       </div>
       {message && <p className={styles.message}>{message}</p>}
       <p className="muted" style={{ fontSize: "0.78rem" }}>
-        CSV columns: date (YYYY-MM-DD), amount, currency, category, note.
+        CSV columns: date (YYYY-MM-DD), type (expense/income), amount, currency,
+        category, note. Files without a type column import as expenses.
       </p>
     </div>
   );

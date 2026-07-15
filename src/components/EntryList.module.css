@@ -1,3 +1,37 @@
+.listHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Segmented control, matching the period tabs in PeriodSelector. */
+.filters {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 3px;
+}
+
+.filterBtn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.filterActive {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
 .list {
   list-style: none;
   margin: 0;
@@ -54,6 +88,9 @@
 .primaryAmount {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.incomeAmount {
+  color: var(--success);
 }
 .convertedAmount {
   font-size: 0.75rem;

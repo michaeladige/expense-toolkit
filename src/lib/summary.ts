@@ -1,8 +1,13 @@
-import type { Expense, RateMap } from "../types";
+import type { Entry, RateMap } from "../types";
 import { convert } from "./currency";
 
-/** Subtotal of expenses grouped by their own currency (no conversion). */
-export function sumByCurrency(expenses: Expense[]): Record<string, number> {
+/**
+ * These helpers take `Entry`, the shape expenses and income share, so both
+ * sides aggregate through the same code.
+ */
+
+/** Subtotal of entries grouped by their own currency (no conversion). */
+export function sumByCurrency(expenses: Entry[]): Record<string, number> {
   const out: Record<string, number> = {};
   for (const e of expenses) {
     out[e.currency] = (out[e.currency] ?? 0) + e.amount;
@@ -12,13 +17,13 @@ export function sumByCurrency(expenses: Expense[]): Record<string, number> {
 
 export interface BaseTotal {
   total: number;
-  /** True if at least one expense could not be converted (missing rate). */
+  /** True if at least one entry could not be converted (missing rate). */
   missing: boolean;
 }
 
-/** Total of all expenses converted into the base currency. */
+/** Total of all entries converted into the base currency. */
 export function totalInBase(
-  expenses: Expense[],
+  expenses: Entry[],
   base: string,
   rates: RateMap
 ): BaseTotal {
@@ -36,9 +41,9 @@ export function totalInBase(
   return { total, missing };
 }
 
-/** Sum of expenses per category id, converted to the base currency. */
+/** Sum of entries per category id, converted to the base currency. */
 export function sumByCategoryInBase(
-  expenses: Expense[],
+  expenses: Entry[],
   base: string,
   rates: RateMap
 ): Record<string, number> {
@@ -51,11 +56,11 @@ export function sumByCategoryInBase(
 }
 
 /**
- * Total spend per "YYYY-MM" month key, converted to the base currency. Only
- * months with at least one expense appear as keys.
+ * Total per "YYYY-MM" month key, converted to the base currency. Only months
+ * with at least one entry appear as keys.
  */
 export function totalsByMonthInBase(
-  expenses: Expense[],
+  expenses: Entry[],
   base: string,
   rates: RateMap
 ): Record<string, number> {
@@ -66,4 +71,30 @@ export function totalsByMonthInBase(
     out[key] = (out[key] ?? 0) + c;
   }
   return out;
+}
+
+export interface NetTotal {
+  income: number;
+  expense: number;
+  /** income - expense; negative means overspending. */
+  net: number;
+  /** True if either side had an unconvertible amount, so net is approximate. */
+  missing: boolean;
+}
+
+/** Income, expense, and net totals for one set of entries, in the base currency. */
+export function netInBase(
+  incomes: Entry[],
+  expenses: Entry[],
+  base: string,
+  rates: RateMap
+): NetTotal {
+  const inc = totalInBase(incomes, base, rates);
+  const exp = totalInBase(expenses, base, rates);
+  return {
+    income: inc.total,
+    expense: exp.total,
+    net: inc.total - exp.total,
+    missing: inc.missing || exp.missing,
+  };
 }

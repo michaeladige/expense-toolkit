@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import type { Expense, PeriodType } from "./types";
+import type { EntryKind, Expense, PeriodType, TaggedEntry } from "./types";
 import { useExpenses } from "./store/ExpenseContext";
 import { useExchangeRates, type RateStatus } from "./hooks/useExchangeRates";
+import { useAutoReports } from "./hooks/useAutoReports";
 import {
   getRange,
   isWithinRange,
@@ -12,14 +13,16 @@ import {
 import { sumByCategoryInBase, totalInBase, totalsByMonthInBase } from "./lib/summary";
 import { gradeSpending } from "./lib/grade";
 import { PeriodSelector } from "./components/PeriodSelector";
-import { ExpenseForm } from "./components/ExpenseForm";
-import { ExpenseList } from "./components/ExpenseList";
+import { EntryForm } from "./components/EntryForm";
+import { EntryList } from "./components/EntryList";
 import { SummaryCards } from "./components/SummaryCards";
 import { CategoryChart } from "./components/CategoryChart";
 import { TrendChart } from "./components/TrendChart";
 import { SpendingGrade } from "./components/SpendingGrade";
 import { BudgetPanel } from "./components/BudgetPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { ReportsPanel } from "./components/ReportsPanel";
+import { ReportToast } from "./components/ReportToast";
 import { UpdatePrompt } from "./components/UpdatePrompt";
 import styles from "./App.module.css";
 
@@ -40,14 +43,43 @@ export default function App() {
 
   const [period, setPeriod] = useState<PeriodType>("month");
   const [refDate, setRefDate] = useState<Date>(new Date());
-  const [editing, setEditing] = useState<Expense | null>(null);
+  const [editing, setEditing] = useState<TaggedEntry | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
+
+  const { fresh, dismissFresh } = useAutoReports({
+    expenses: store.expenses,
+    incomes: store.incomes,
+    reports: store.reports,
+    settings,
+    rates,
+    rateStatus: status,
+    categoryById: store.categoryById,
+    incomeCategoryById: store.incomeCategoryById,
+    addReports: store.addReports,
+    updateSettings: store.updateSettings,
+  });
 
   // Expenses within the currently selected period.
   const periodExpenses = useMemo(() => {
     const range = getRange(period, refDate);
     return store.expenses.filter((e) => isWithinRange(e.date, range));
   }, [store.expenses, period, refDate]);
+
+  // Income within the currently selected period.
+  const periodIncomes = useMemo(() => {
+    const range = getRange(period, refDate);
+    return store.incomes.filter((e) => isWithinRange(e.date, range));
+  }, [store.incomes, period, refDate]);
+
+  // The two sides merged into one list for the unified transaction view.
+  const periodEntries = useMemo<TaggedEntry[]>(
+    () => [
+      ...periodExpenses.map((e) => ({ ...e, kind: "expense" as const })),
+      ...periodIncomes.map((e) => ({ ...e, kind: "income" as const })),
+    ],
+    [periodExpenses, periodIncomes]
+  );
 
   // Category slices for the chart (period-scoped, converted to base).
   const categorySlices = useMemo(() => {
@@ -125,13 +157,23 @@ export default function App() {
     });
   }, [store.expenses, period, refDate, settings.baseCurrency, rates]);
 
-  function handleSubmit(data: Omit<Expense, "id" | "createdAt">) {
+  function handleSubmit(kind: EntryKind, data: Omit<Expense, "id" | "createdAt">) {
     if (editing) {
-      store.updateExpense(editing.id, data);
+      // The form locks `kind` while editing, so an entry always updates in place.
+      if (editing.kind === "income") store.updateIncome(editing.id, data);
+      else store.updateExpense(editing.id, data);
       setEditing(null);
+    } else if (kind === "income") {
+      store.addIncome(data);
     } else {
       store.addExpense(data);
     }
+  }
+
+  function handleDelete(entry: TaggedEntry) {
+    if (entry.kind === "income") store.deleteIncome(entry.id);
+    else store.deleteExpense(entry.id);
+    if (editing?.kind === entry.kind && editing.id === entry.id) setEditing(null);
   }
 
   const pill = RATE_PILL[status];
@@ -157,6 +199,10 @@ export default function App() {
             <span className="dot" />
             {pill.label}
           </button>
+          <button className="btn" onClick={() => setReportsOpen(true)}>
+            📊 Reports
+            {store.reports.length > 0 && ` (${store.reports.length})`}
+          </button>
           <button className="btn" onClick={() => setSettingsOpen(true)}>
             ⚙ Settings
           </button>
@@ -175,26 +221,29 @@ export default function App() {
 
         <SummaryCards
           expenses={periodExpenses}
+          incomes={periodIncomes}
           baseCurrency={settings.baseCurrency}
           rates={rates}
         />
 
         <div className={styles.columns}>
           <div className={styles.col}>
-            <ExpenseForm
+            <EntryForm
               categories={store.categories}
+              incomeCategories={store.incomeCategories}
               defaultCurrency={settings.baseCurrency}
               editing={editing}
               onSubmit={handleSubmit}
               onCancelEdit={() => setEditing(null)}
             />
-            <ExpenseList
-              expenses={periodExpenses}
+            <EntryList
+              entries={periodEntries}
               categoryById={store.categoryById}
+              incomeCategoryById={store.incomeCategoryById}
               baseCurrency={settings.baseCurrency}
               rates={rates}
               onEdit={setEditing}
-              onDelete={store.deleteExpense}
+              onDelete={handleDelete}
             />
           </div>
 
@@ -239,15 +288,39 @@ export default function App() {
           onAddCategory={store.addCategory}
           onUpdateCategory={store.updateCategory}
           onDeleteCategory={store.deleteCategory}
+          incomeCategories={store.incomeCategories}
+          onAddIncomeCategory={store.addIncomeCategory}
+          onUpdateIncomeCategory={store.updateIncomeCategory}
+          onDeleteIncomeCategory={store.deleteIncomeCategory}
           expenses={store.expenses}
+          incomes={store.incomes}
           categoryById={store.categoryById}
-          onImport={store.importExpenses}
+          incomeCategoryById={store.incomeCategoryById}
+          onImportExpenses={store.importExpenses}
+          onImportIncomes={store.importIncomes}
           onClearAll={store.clearAllData}
           onClose={() => setSettingsOpen(false)}
         />
       )}
 
-      <UpdatePrompt />
+      {reportsOpen && (
+        <ReportsPanel
+          reports={store.reports}
+          onClose={() => setReportsOpen(false)}
+        />
+      )}
+
+      <div className="toast-stack">
+        <ReportToast
+          reports={fresh}
+          onView={() => {
+            dismissFresh();
+            setReportsOpen(true);
+          }}
+          onDismiss={dismissFresh}
+        />
+        <UpdatePrompt />
+      </div>
     </div>
   );
 }
