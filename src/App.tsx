@@ -11,14 +11,14 @@ import {
   monthKey,
 } from "./lib/dates";
 import { sumByCategoryInBase, totalInBase, totalsByMonthInBase } from "./lib/summary";
-import { gradeSpending } from "./lib/grade";
+import { gradeSavings, gradeSpending } from "./lib/grade";
 import { PeriodSelector } from "./components/PeriodSelector";
 import { EntryForm } from "./components/EntryForm";
 import { EntryList } from "./components/EntryList";
 import { SummaryCards } from "./components/SummaryCards";
 import { CategoryChart } from "./components/CategoryChart";
 import { TrendChart } from "./components/TrendChart";
-import { SpendingGrade } from "./components/SpendingGrade";
+import { MonthGrades } from "./components/MonthGrades";
 import { BudgetPanel } from "./components/BudgetPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { ReportsPanel } from "./components/ReportsPanel";
@@ -93,10 +93,13 @@ export default function App() {
       .filter((s) => s.amount > 0);
   }, [periodExpenses, store.categories, settings.baseCurrency, rates]);
 
-  // Budgets always track the calendar month containing refDate.
+  // Budgets and grades always track the calendar month containing refDate.
   const monthData = useMemo(() => {
     const range = getRange("month", refDate);
     const monthExpenses = store.expenses.filter((e) =>
+      isWithinRange(e.date, range)
+    );
+    const monthIncomes = store.incomes.filter((e) =>
       isWithinRange(e.date, range)
     );
     const byCategory = sumByCategoryInBase(
@@ -105,8 +108,9 @@ export default function App() {
       rates
     );
     const total = Object.values(byCategory).reduce((s, v) => s + v, 0);
-    return { byCategory, total };
-  }, [store.expenses, refDate, settings.baseCurrency, rates]);
+    const income = totalInBase(monthIncomes, settings.baseCurrency, rates).total;
+    return { byCategory, total, income, net: income - total };
+  }, [store.expenses, store.incomes, refDate, settings.baseCurrency, rates]);
 
   // Resolves the target for the spending grade: an explicit Overall budget
   // takes priority; otherwise falls back to the average total spend of prior
@@ -141,6 +145,14 @@ export default function App() {
     const grade = gradeSpending(monthData.total, target);
     return grade ? { grade, target, targetSource } : null;
   }, [store.budgets, store.expenses, refDate, settings.baseCurrency, rates, monthData.total]);
+
+  // Scored separately from the spending grade, against income rather than a
+  // target: you can hold a budget and still save nothing, and one number
+  // couldn't say both. Null until some income exists to divide by.
+  const savingsGrade = useMemo(() => {
+    const grade = gradeSavings(monthData.net, monthData.income);
+    return grade ? { grade, income: monthData.income, net: monthData.net } : null;
+  }, [monthData.net, monthData.income]);
 
   // Spending totals for recent periods, for the trend chart.
   const trendBuckets = useMemo(() => {
@@ -257,8 +269,9 @@ export default function App() {
               data={categorySlices}
               baseCurrency={settings.baseCurrency}
             />
-            <SpendingGrade
-              info={spendingGrade}
+            <MonthGrades
+              spending={spendingGrade}
+              savings={savingsGrade}
               monthTotal={monthData.total}
               baseCurrency={settings.baseCurrency}
               monthLabel={formatPeriodLabel("month", refDate)}

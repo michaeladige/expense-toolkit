@@ -38,9 +38,17 @@ expenses, income, categories, budgets, reports, and settings are stored in
   8 weeks / 12 months), with the current period highlighted.
 - **Monthly budgets** — set overall or per-category limits and watch progress bars
   turn amber near the limit and red when exceeded.
-- **Spending grade** — a report-card letter grade (S/A/B/C/D/F) for the month,
-  scored against your Overall budget if you've set one, or your average
-  monthly spend otherwise.
+- **Two monthly grades** — report-card letters (S/A/B/C/D/F) scored against two
+  different yardsticks, each labelled with the one it uses:
+  - **Spending** — vs your Overall budget if you've set one, or your average
+    monthly spend otherwise.
+  - **Savings** — what share of the month's income survived it (`net / income`),
+    with the conventional 20% savings rate anchoring an A. Shown only when
+    you've recorded income that month.
+
+  They're deliberately separate rather than combined: you can hold your budget
+  and still save nothing, or blow past it in a month you earned plenty, and one
+  letter can't say both.
 - **CSV import / export** — back up or move your data as a plain CSV (columns:
   `date, type, amount, currency, category, note`), and a "Clear all" reset.
   Files exported before income existed (no `type` column) still import fine, as

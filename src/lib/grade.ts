@@ -2,7 +2,7 @@ export type Grade = "S" | "A" | "B" | "C" | "D" | "F";
 
 export interface GradeResult {
   grade: Grade;
-  /** spent / target, unrounded. */
+  /** Unrounded; what it's a ratio *of* depends on the grader that produced it. */
   ratio: number;
   label: string;
   /** CSS custom-property reference, e.g. "var(--success)". */
@@ -35,5 +35,44 @@ export function gradeSpending(spent: number, target: number): GradeResult | null
   if (!(target > 0)) return null;
   const ratio = spent / target;
   const tier = TIERS.find((t) => ratio <= t.max)!;
+  return { grade: tier.grade, ratio, label: tier.label, color: tier.color };
+}
+
+interface SavingsTier {
+  grade: Grade;
+  /** Inclusive lower bound of the savings rate for this tier. */
+  min: number;
+  label: string;
+  color: string;
+}
+
+/**
+ * Savings-rate tiers, in descending order — unlike spending, more is better.
+ * 20% is the conventional personal-finance benchmark, so it anchors an A.
+ * A negative rate means the month spent more than it earned.
+ */
+const SAVINGS_TIERS: SavingsTier[] = [
+  { grade: "S", min: 0.3, label: "Hoarding like a dragon. Respect.", color: "var(--success)" },
+  { grade: "A", min: 0.2, label: "Saving like you mean it.", color: "var(--success)" },
+  { grade: "B", min: 0.1, label: "A tidy little cushion.", color: "var(--warning)" },
+  { grade: "C", min: 0, label: "Breaking even. Just barely.", color: "var(--warning)" },
+  { grade: "D", min: -0.1, label: "Spending more than you earn.", color: "var(--danger)" },
+  { grade: "F", min: -Infinity, label: "Torching the savings. Please stop.", color: "var(--danger)" },
+];
+
+/**
+ * Grade what share of the month's income survived it, as `net / income`.
+ *
+ * Deliberately separate from `gradeSpending` rather than another target for it:
+ * the two answer different questions ("did I stick to my plan?" vs "am I
+ * keeping any of what I earn?") and you can pass one while failing the other.
+ *
+ * Returns null when no income was recorded — there's no rate to compute, and an
+ * F would punish anyone who simply tracks expenses only.
+ */
+export function gradeSavings(net: number, income: number): GradeResult | null {
+  if (!(income > 0)) return null;
+  const ratio = net / income;
+  const tier = SAVINGS_TIERS.find((t) => ratio >= t.min)!;
   return { grade: tier.grade, ratio, label: tier.label, color: tier.color };
 }
