@@ -173,16 +173,23 @@ export default function App() {
     return grade ? { grade, income: monthData.income, net: monthData.net } : null;
   }, [monthData.net, monthData.income]);
 
-  // Spending totals for recent periods, for the trend chart.
+  // Spending totals for recent periods, for the trend chart. Broken down by
+  // category too, so the bars can stack the same way the pie chart does.
   const trendBuckets = useMemo(() => {
     const counts: Record<PeriodType, number> = { day: 14, week: 8, month: 12 };
     const buckets = getRecentPeriods(period, refDate, counts[period]);
     const selected = getRange(period, refDate);
     return buckets.map((b) => {
       const inRange = store.expenses.filter((e) => isWithinRange(e.date, b));
+      const byCategory = sumByCategoryInBase(
+        inRange,
+        settings.baseCurrency,
+        rates
+      );
       return {
         label: b.label,
         total: totalInBase(inRange, settings.baseCurrency, rates).total,
+        byCategory,
         current: b.start.getTime() === selected.start.getTime(),
       };
     });
@@ -297,6 +304,7 @@ export default function App() {
           <div className={styles.col}>
             <TrendChart
               buckets={trendBuckets}
+              categories={store.categories}
               baseCurrency={settings.baseCurrency}
               periodLabel={period}
             />

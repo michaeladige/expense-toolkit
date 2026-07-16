@@ -1,17 +1,20 @@
-import { useState } from "react";
-import type { PeriodType } from "../types";
+import { useMemo, useState } from "react";
+import type { Category, PeriodType } from "../types";
 import { formatMoney } from "../lib/currency";
 import styles from "./TrendChart.module.css";
 
 export interface TrendBucket {
   label: string;
   total: number;
+  /** Spend in this bucket by category id, in base currency. */
+  byCategory: Record<string, number>;
   /** True for the period currently selected in the app. */
   current: boolean;
 }
 
 interface Props {
   buckets: TrendBucket[];
+  categories: Category[];
   baseCurrency: string;
   periodLabel: PeriodType;
 }
@@ -22,8 +25,23 @@ const PAD_TOP = 18;
 const PAD_BOTTOM = 22;
 const GAP = 2;
 
-export function TrendChart({ buckets, baseCurrency, periodLabel }: Props) {
+export function TrendChart({ buckets, categories, baseCurrency, periodLabel }: Props) {
   const [hover, setHover] = useState<number | null>(null);
+
+  // Stacking order: categories with the most spend across the visible
+  // buckets first, same idea as the pie chart's largest-slice-first sort, so
+  // colors line up consistently bar to bar.
+  const orderedCategories = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const b of buckets) {
+      for (const [id, amount] of Object.entries(b.byCategory)) {
+        totals[id] = (totals[id] ?? 0) + amount;
+      }
+    }
+    return categories
+      .filter((c) => (totals[c.id] ?? 0) > 0)
+      .sort((a, b) => (totals[b.id] ?? 0) - (totals[a.id] ?? 0));
+  }, [buckets, categories]);
 
   const max = Math.max(...buckets.map((b) => b.total), 1);
   const plotH = H - PAD_TOP - PAD_BOTTOM;
@@ -50,7 +68,7 @@ export function TrendChart({ buckets, baseCurrency, periodLabel }: Props) {
         viewBox={`0 0 ${W} ${H}`}
         className={styles.svg}
         role="img"
-        aria-label={`Spending over the last ${buckets.length} ${periodLabel}s`}
+        aria-label={`Spending over the last ${buckets.length} ${periodLabel}s, by category`}
       >
         {/* baseline */}
         <line
@@ -61,10 +79,21 @@ export function TrendChart({ buckets, baseCurrency, periodLabel }: Props) {
           className={styles.baseline}
         />
         {buckets.map((b, i) => {
-          const h = (b.total / max) * plotH;
           const x = i * slot + GAP;
-          const y = H - PAD_BOTTOM - h;
           const isActive = hover === i || (hover == null && b.current);
+
+          let cursorY = H - PAD_BOTTOM;
+          const segments = orderedCategories
+            .map((cat) => {
+              const amount = b.byCategory[cat.id] ?? 0;
+              if (amount <= 0) return null;
+              const h = (amount / max) * plotH;
+              const y = cursorY - h;
+              cursorY = y;
+              return { id: cat.id, name: cat.name, color: cat.color, y, h, amount };
+            })
+            .filter((s): s is NonNullable<typeof s> => s != null);
+
           return (
             <g
               key={i}
@@ -79,16 +108,42 @@ export function TrendChart({ buckets, baseCurrency, periodLabel }: Props) {
                 height={plotH + PAD_BOTTOM - PAD_TOP}
                 fill="transparent"
               />
-              <rect
-                x={x}
-                y={b.total > 0 ? y : H - PAD_BOTTOM - 2}
-                width={barW}
-                height={b.total > 0 ? h : 2}
-                rx={3}
-                className={`${styles.bar} ${
-                  b.current ? styles.barCurrent : ""
-                } ${isActive ? styles.barActive : ""}`}
-              />
+              {b.total > 0 ? (
+                segments.map((s) => (
+                  <rect
+                    key={s.id}
+                    x={x}
+                    y={s.y}
+                    width={barW}
+                    height={s.h}
+                    className={`${styles.segment} ${isActive ? styles.segmentActive : ""}`}
+                    fill={s.color}
+                  >
+                    <title>
+                      {s.name}: {formatMoney(s.amount, baseCurrency)}
+                    </title>
+                  </rect>
+                ))
+              ) : (
+                <rect
+                  x={x}
+                  y={H - PAD_BOTTOM - 2}
+                  width={barW}
+                  height={2}
+                  rx={1}
+                  className={styles.empty}
+                />
+              )}
+              {b.current && (
+                <rect
+                  x={x - 1}
+                  y={H - PAD_BOTTOM - Math.max((b.total / max) * plotH, 2) - 1}
+                  width={barW + 2}
+                  height={Math.max((b.total / max) * plotH, 2) + 2}
+                  rx={3}
+                  className={styles.currentOutline}
+                />
+              )}
               <text
                 x={i * slot + slot / 2}
                 y={H - PAD_BOTTOM + 14}
@@ -101,6 +156,21 @@ export function TrendChart({ buckets, baseCurrency, periodLabel }: Props) {
           );
         })}
       </svg>
+
+      {orderedCategories.length > 0 && (
+        <ul className={styles.legend}>
+          {orderedCategories.map((c) => (
+            <li key={c.id} className={styles.legendItem}>
+              <span
+                className={styles.swatch}
+                style={{ background: c.color }}
+                aria-hidden
+              />
+              {c.name}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
