@@ -1,33 +1,123 @@
-:root {
-  --bg: #f4f5f7;
-  --surface: #ffffff;
-  --surface-2: #f8fafc;
+/* ---------- Appearance ----------
+ * Three independent axes, set as data-* attributes on <html> by
+ * hooks/useTheme.ts (and, before first paint, by the inline script in
+ * index.html):
+ *
+ *   data-mode    light | dark      — the neutral ramp. "system" is resolved in
+ *                                    JS, so CSS only ever sees a concrete mode.
+ *   data-theme   indigo | violet | emerald | cyan | amber | rose
+ *   data-pattern none | dots | grid | diagonal
+ *
+ * Components never reference these; they consume the derived variables at the
+ * bottom of this block, which is why theming needs no component changes.
+ */
+
+/* Colour: each theme contributes only its accent. Everything else derives. */
+:root,
+:root[data-theme="indigo"] {
+  --accent-light: #4f46e5;
+  --accent-dark: #818cf8;
+}
+:root[data-theme="violet"] {
+  --accent-light: #7c3aed;
+  --accent-dark: #a78bfa;
+}
+:root[data-theme="emerald"] {
+  --accent-light: #059669;
+  --accent-dark: #34d399;
+}
+:root[data-theme="cyan"] {
+  --accent-light: #0891b2;
+  --accent-dark: #22d3ee;
+}
+:root[data-theme="amber"] {
+  --accent-light: #d97706;
+  --accent-dark: #fbbf24;
+}
+:root[data-theme="rose"] {
+  --accent-light: #e11d48;
+  --accent-dark: #fb7185;
+}
+
+/* Mode: the neutral ramp, the tint strengths, and which accent shade is live.
+ * color-scheme is pinned per mode rather than "light dark" so native controls
+ * follow the *chosen* mode — otherwise picking Light on a dark-mode phone
+ * still renders dark selects and date pickers. */
+:root,
+:root[data-mode="light"] {
+  color-scheme: light;
+  --accent: var(--accent-light);
+  --neutral-bg: #f4f5f7;
+  --neutral-surface: #ffffff;
+  --neutral-surface-2: #f8fafc;
   --border: #e2e8f0;
   --text: #0f172a;
   --text-muted: #64748b;
-  --primary: #4f46e5;
   --primary-contrast: #ffffff;
+  --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --tint-bg: 5%;
+  --tint-surface: 2%;
+  --pattern-tint: 9%;
+}
+
+:root[data-mode="dark"] {
+  color-scheme: dark;
+  --accent: var(--accent-dark);
+  --neutral-bg: #0b1120;
+  --neutral-surface: #131c2e;
+  --neutral-surface-2: #1b2536;
+  --border: #26304359;
+  --text: #e6edf6;
+  --text-muted: #94a3b8;
+  --primary-contrast: #0b1120;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --tint-bg: 7%;
+  --tint-surface: 4%;
+  --pattern-tint: 12%;
+}
+
+/* Pattern: pure CSS gradients, inked in the accent so they follow both other
+ * axes for free. No image assets, so nothing extra to precache. */
+:root[data-pattern="dots"] {
+  --pattern-image: radial-gradient(var(--pattern-ink) 1.5px, transparent 1.5px);
+  --pattern-size: 18px 18px;
+}
+:root[data-pattern="grid"] {
+  --pattern-image: linear-gradient(var(--pattern-ink) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pattern-ink) 1px, transparent 1px);
+  --pattern-size: 24px 24px;
+}
+:root[data-pattern="diagonal"] {
+  --pattern-image: repeating-linear-gradient(
+    45deg,
+    var(--pattern-ink) 0,
+    var(--pattern-ink) 1px,
+    transparent 1px,
+    transparent 11px
+  );
+  --pattern-size: auto;
+}
+
+/* Derived — the only variables the rest of the app reads. */
+:root {
+  --primary: var(--accent);
+  --bg: color-mix(in srgb, var(--accent) var(--tint-bg), var(--neutral-bg));
+  --surface: color-mix(
+    in srgb,
+    var(--accent) var(--tint-surface),
+    var(--neutral-surface)
+  );
+  --surface-2: color-mix(
+    in srgb,
+    var(--accent) var(--tint-surface),
+    var(--neutral-surface-2)
+  );
+  --pattern-ink: color-mix(in srgb, var(--accent) var(--pattern-tint), transparent);
   --danger: #ef4444;
   --warning: #f59e0b;
   --success: #10b981;
-  --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
   --radius: 12px;
   --radius-sm: 8px;
-  color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b1120;
-    --surface: #131c2e;
-    --surface-2: #1b2536;
-    --border: #26304359;
-    --text: #e6edf6;
-    --text-muted: #94a3b8;
-    --primary: #818cf8;
-    --primary-contrast: #0b1120;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  }
 }
 
 * {
@@ -45,7 +135,12 @@ body {
 
 body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
+  /* Pattern rides on top of the flat background; cards are opaque, so text is
+     never laid over it. `background-attachment` stays at the default `scroll` —
+     `fixed` is a well-known repaint cost on iOS Safari. */
+  background-color: var(--bg);
+  background-image: var(--pattern-image, none);
+  background-size: var(--pattern-size, auto);
   color: var(--text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;

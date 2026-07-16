@@ -1,3 +1,5 @@
+import type { ThemeColor, ThemeMode, ThemePattern } from "./lib/theme";
+
 export type PeriodType = "day" | "week" | "month";
 
 /** Periods that get an automatic report. A subset of PeriodType, so the
@@ -96,6 +98,15 @@ export interface Settings {
    * reported on. Set once on first run so existing history isn't backfilled.
    */
   reportsSince?: string;
+  /**
+   * Appearance. All three are optional: settings saved before theming existed
+   * (and JSON backups from then) have no such keys, and `useLocalStorage`
+   * doesn't merge defaults into a stored object — so every read site falls back
+   * to the defaults in `lib/theme.ts`.
+   */
+  mode?: ThemeMode;
+  themeColor?: ThemeColor;
+  pattern?: ThemePattern;
 }
 
 export interface ReportCategoryTotal {

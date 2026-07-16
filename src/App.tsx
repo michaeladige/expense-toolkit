@@ -4,6 +4,7 @@ import { useExpenses } from "./store/ExpenseContext";
 import { useExchangeRates, type RateStatus } from "./hooks/useExchangeRates";
 import { useAutoReports } from "./hooks/useAutoReports";
 import { useRecurring } from "./hooks/useRecurring";
+import { useTheme } from "./hooks/useTheme";
 import {
   getRange,
   isWithinRange,
@@ -44,6 +45,8 @@ export default function App() {
   const { rates, status, fetchedAt, refresh } = useExchangeRates(
     settings.baseCurrency
   );
+
+  useTheme(settings);
 
   const [period, setPeriod] = useState<PeriodType>("month");
   const [refDate, setRefDate] = useState<Date>(new Date());

@@ -4,12 +4,40 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#818cf8" media="(prefers-color-scheme: dark)" />
+    <!-- Kept current at runtime by hooks/useTheme.ts; the value here is only
+         what's shown before the app mounts. -->
+    <meta name="theme-color" content="#f4f5f7" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="alternate icon" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Expense Toolkit</title>
+    <script>
+      // Apply the saved theme before first paint. Without this, every load —
+      // most visibly a PWA cold start — flashes the default theme until React
+      // mounts and useTheme runs.
+      //
+      // This has to run before any module loads, so it necessarily duplicates
+      // the storage key from lib/constants.ts and the defaults from
+      // lib/theme.ts. Keep the two in step.
+      (function () {
+        try {
+          var s =
+            JSON.parse(localStorage.getItem("expense-toolkit:settings")) || {};
+          var mode = s.mode || "system";
+          if (mode === "system") {
+            mode = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          }
+          var root = document.documentElement;
+          root.dataset.mode = mode;
+          root.dataset.theme = s.themeColor || "indigo";
+          root.dataset.pattern = s.pattern || "none";
+        } catch (e) {
+          /* No/!parseable settings — the CSS defaults already cover this. */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

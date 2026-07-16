@@ -13,6 +13,7 @@ import type { RateStatus } from "../hooks/useExchangeRates";
 import { CURRENCIES, OTHER_EXPENSE_ID, OTHER_INCOME_ID } from "../lib/constants";
 import { permission, requestPermission, supported } from "../lib/notify";
 import { appVersion } from "../lib/version";
+import { AppearancePanel } from "./AppearancePanel";
 import { CategoryManager } from "./CategoryManager";
 import { DataControls } from "./DataControls";
 import styles from "./SettingsPanel.module.css";
@@ -149,6 +150,14 @@ export function SettingsPanel({
               Refresh
             </button>
           </div>
+        </section>
+
+        <section className={styles.section}>
+          <h3 className={styles.subheading}>Appearance</h3>
+          <AppearancePanel
+            settings={settings}
+            onUpdateSettings={onUpdateSettings}
+          />
         </section>
 
         <section className={styles.section}>
