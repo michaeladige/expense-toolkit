@@ -1,6 +1,24 @@
+import { execSync } from "node:child_process";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+
+/** Runs a git command, falling back when there's no repo/history (e.g. a
+ *  tarball build) rather than failing the whole build over a version string. */
+function git(command: string, fallback: string): string {
+  try {
+    return execSync(command, { encoding: "utf-8" }).trim() || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+// The number of commits reaching HEAD, on whichever branch is checked out —
+// a simple, monotonically increasing build number with no separate tagging
+// step to remember. CI must check out full history (`fetch-depth: 0`) or
+// this collapses to 1 in a shallow clone.
+const commitCount = git("git rev-list --count HEAD", "0");
+const commitHash = git("git rev-parse --short HEAD", "unknown");
 
 // https://vitejs.dev/config/
 // On GitHub Pages the app is served from https://<user>.github.io/expense-toolkit/,
@@ -10,6 +28,10 @@ export default defineConfig(({ command }) => {
 
   return {
     base,
+    define: {
+      __APP_BUILD__: JSON.stringify(commitCount),
+      __APP_COMMIT__: JSON.stringify(commitHash),
+    },
     plugins: [
       react(),
       VitePWA({

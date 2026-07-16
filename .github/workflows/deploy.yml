@@ -24,6 +24,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history: the build's version string is the commit count
+          # reaching HEAD (see vite.config.ts), which a shallow clone would
+          # collapse to 1.
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4

@@ -12,6 +12,7 @@ import type { BackupData } from "../lib/backup";
 import type { RateStatus } from "../hooks/useExchangeRates";
 import { CURRENCIES, OTHER_EXPENSE_ID, OTHER_INCOME_ID } from "../lib/constants";
 import { permission, requestPermission, supported } from "../lib/notify";
+import { appVersion } from "../lib/version";
 import { CategoryManager } from "./CategoryManager";
 import { DataControls } from "./DataControls";
 import styles from "./SettingsPanel.module.css";
@@ -233,6 +234,13 @@ export function SettingsPanel({
             onClearAll={onClearAll}
             onRestoreAll={onRestoreAll}
           />
+        </section>
+
+        <section className={styles.section}>
+          <h3 className={styles.subheading}>About</h3>
+          <p className="muted" style={{ fontSize: "0.8rem" }}>
+            Expense Toolkit · {appVersion}
+          </p>
         </section>
       </aside>
     </>
