@@ -70,6 +70,9 @@
 .title {
   font-weight: 600;
   font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .sub {
   font-size: 0.78rem;
@@ -84,6 +87,7 @@
   flex-direction: column;
   align-items: flex-end;
   text-align: right;
+  flex: 0 0 auto;
 }
 .primaryAmount {
   font-weight: 600;
@@ -101,4 +105,5 @@
 .rowActions {
   display: flex;
   gap: 0.15rem;
+  flex: 0 0 auto;
 }
