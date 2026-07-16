@@ -253,9 +253,17 @@ export function useHolidays(country?: string, region?: string): UseHolidays {
   }, [country]);
 
   useEffect(() => {
-    if (countries.length > 0) return;
+    // Refresh in the background every mount rather than only when empty: the
+    // cached list is what an *earlier build* fetched, so a guard on
+    // `length > 0` would strand existing users on a stale list forever (e.g.
+    // one fetched before Taiwan was appended). The cached value still renders
+    // immediately; this only replaces it, and only when it actually differs.
     fetchCountries()
-      .then(setCountries)
+      .then((fresh) =>
+        setCountries((prev) =>
+          JSON.stringify(prev) === JSON.stringify(fresh) ? prev : fresh
+        )
+      )
       .catch((err) => console.warn("[holidays] country list failed:", err));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
