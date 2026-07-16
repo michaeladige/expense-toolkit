@@ -30,7 +30,7 @@ export function DayTypeAnalytics({ breakdown, baseCurrency }: Props) {
   return (
     <div className={`card ${styles.panel}`}>
       <div className={styles.head}>
-        <h2 className={styles.title}>When you spend</h2>
+        <h2>When you spend</h2>
         <span className={styles.sub}>All-time · avg = per day you spent</span>
       </div>
 
