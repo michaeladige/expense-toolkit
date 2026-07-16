@@ -1,15 +1,11 @@
 import { useState } from "react";
 import type { Category, RateMap, TaggedEntry } from "../types";
 import { EntryItem } from "./EntryItem";
+import { FILTERS, byRecency, type Filter } from "../lib/entryFilters";
 import styles from "./EntryList.module.css";
 
-type Filter = "all" | "expense" | "income";
-
-const FILTERS: { id: Filter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "expense", label: "Expenses" },
-  { id: "income", label: "Income" },
-];
+/** How many rows the collapsed main-view list shows before "View all". */
+const COLLAPSED_COUNT = 3;
 
 interface Props {
   entries: TaggedEntry[];
@@ -20,6 +16,7 @@ interface Props {
   onEdit: (e: TaggedEntry) => void;
   onDelete: (e: TaggedEntry) => void;
   onDuplicate: (e: TaggedEntry) => void;
+  onViewAll: () => void;
 }
 
 export function EntryList({
@@ -31,15 +28,13 @@ export function EntryList({
   onEdit,
   onDelete,
   onDuplicate,
+  onViewAll,
 }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
 
   const visible = entries.filter((e) => filter === "all" || e.kind === filter);
-  const sorted = [...visible].sort((a, b) =>
-    a.date === b.date
-      ? b.createdAt.localeCompare(a.createdAt)
-      : b.date.localeCompare(a.date)
-  );
+  const sorted = [...visible].sort(byRecency);
+  const shown = sorted.slice(0, COLLAPSED_COUNT);
 
   return (
     <div className="card">
@@ -67,24 +62,35 @@ export function EntryList({
             : `No ${filter === "income" ? "income" : "expenses"} in this period yet.`}
         </p>
       ) : (
-        <ul className={styles.list}>
-          {sorted.map((e) => (
-            <EntryItem
-              key={`${e.kind}:${e.id}`}
-              entry={e}
-              category={
-                e.kind === "income"
-                  ? incomeCategoryById(e.categoryId)
-                  : categoryById(e.categoryId)
-              }
-              baseCurrency={baseCurrency}
-              rates={rates}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onDuplicate={onDuplicate}
-            />
-          ))}
-        </ul>
+        <>
+          <ul className={styles.list}>
+            {shown.map((e) => (
+              <EntryItem
+                key={`${e.kind}:${e.id}`}
+                entry={e}
+                category={
+                  e.kind === "income"
+                    ? incomeCategoryById(e.categoryId)
+                    : categoryById(e.categoryId)
+                }
+                baseCurrency={baseCurrency}
+                rates={rates}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onDuplicate={onDuplicate}
+              />
+            ))}
+          </ul>
+          {sorted.length > COLLAPSED_COUNT && (
+            <button
+              type="button"
+              className={`btn btn-ghost ${styles.viewAll}`}
+              onClick={onViewAll}
+            >
+              View all {sorted.length} transactions
+            </button>
+          )}
+        </>
       )}
     </div>
   );

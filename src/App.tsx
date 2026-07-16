@@ -21,6 +21,7 @@ import { buildDayTypeBreakdown } from "./lib/daytype";
 import { PeriodSelector } from "./components/PeriodSelector";
 import { EntryForm } from "./components/EntryForm";
 import { EntryList } from "./components/EntryList";
+import { AllEntriesPanel } from "./components/AllEntriesPanel";
 import { SummaryCards } from "./components/SummaryCards";
 import { CategoryChart } from "./components/CategoryChart";
 import { DayTypeAnalytics } from "./components/DayTypeAnalytics";
@@ -57,6 +58,7 @@ export default function App() {
   const [editing, setEditing] = useState<TaggedEntry | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
+  const [allEntriesOpen, setAllEntriesOpen] = useState(false);
 
   const { fresh, dismissFresh } = useAutoReports({
     expenses: store.expenses,
@@ -318,6 +320,7 @@ export default function App() {
               onEdit={setEditing}
               onDelete={handleDelete}
               onDuplicate={handleDuplicate}
+              onViewAll={() => setAllEntriesOpen(true)}
             />
           </div>
 
@@ -408,6 +411,26 @@ export default function App() {
         <ReportsPanel
           reports={store.reports}
           onClose={() => setReportsOpen(false)}
+        />
+      )}
+
+      {allEntriesOpen && (
+        <AllEntriesPanel
+          entries={periodEntries}
+          categoryById={store.categoryById}
+          incomeCategoryById={store.incomeCategoryById}
+          categories={store.categories}
+          incomeCategories={store.incomeCategories}
+          baseCurrency={settings.baseCurrency}
+          rates={rates}
+          periodLabel={formatPeriodLabel(period, refDate)}
+          onEdit={(e) => {
+            setAllEntriesOpen(false);
+            setEditing(e);
+          }}
+          onDelete={handleDelete}
+          onDuplicate={handleDuplicate}
+          onClose={() => setAllEntriesOpen(false)}
         />
       )}
 
