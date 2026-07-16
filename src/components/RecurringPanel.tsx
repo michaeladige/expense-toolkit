@@ -10,6 +10,7 @@ interface Props {
   categories: Category[];
   incomeCategories: Category[];
   recurring: RecurringRule[];
+  defaultCurrency: string;
   onAdd: (data: Omit<RecurringRule, "id">) => void;
   onUpdate: (id: string, data: Partial<Omit<RecurringRule, "id">>) => void;
   onDelete: (id: string) => void;
@@ -24,11 +25,15 @@ interface FormState {
   note: string;
 }
 
-function blank(kind: EntryKind, kindCategories: Category[]): FormState {
+function blank(
+  kind: EntryKind,
+  kindCategories: Category[],
+  currency: string
+): FormState {
   return {
     kind,
     amount: "",
-    currency: "USD",
+    currency,
     categoryId: kindCategories[0]?.id ?? OTHER_EXPENSE_ID,
     dayOfMonth: "1",
     note: "",
@@ -39,6 +44,7 @@ export function RecurringPanel({
   categories,
   incomeCategories,
   recurring,
+  defaultCurrency,
   onAdd,
   onUpdate,
   onDelete,
@@ -46,7 +52,9 @@ export function RecurringPanel({
   const listFor = (kind: EntryKind) =>
     kind === "income" ? incomeCategories : categories;
 
-  const [form, setForm] = useState<FormState>(() => blank("expense", categories));
+  const [form, setForm] = useState<FormState>(() =>
+    blank("expense", categories, defaultCurrency)
+  );
   const isIncome = form.kind === "income";
   const activeCategories = listFor(form.kind);
 
@@ -78,7 +86,7 @@ export function RecurringPanel({
       startDate: todayISO(),
       enabled: true,
     });
-    setForm(blank(form.kind, activeCategories));
+    setForm(blank(form.kind, activeCategories, defaultCurrency));
   }
 
   function labelFor(rule: RecurringRule): string {

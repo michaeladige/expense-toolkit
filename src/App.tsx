@@ -325,6 +325,7 @@ export default function App() {
               categories={store.categories}
               incomeCategories={store.incomeCategories}
               recurring={store.recurring}
+              defaultCurrency={settings.baseCurrency}
               onAdd={store.addRecurring}
               onUpdate={store.updateRecurring}
               onDelete={store.deleteRecurring}
