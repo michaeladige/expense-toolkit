@@ -1,6 +1,6 @@
 import type { RecurringAnchor, RecurringFrequency, RecurringRule } from "../types";
 import { fromISODate, getRange, shiftPeriod, toISODate } from "./dates";
-import { firstWorkingDay, lastWorkingDay, type HolidaySet } from "./workdays";
+import { firstWorkingDay, lastWorkingDay, type WorkCalendar } from "./workdays";
 
 /**
  * Most occurrences materialized in a single pass. Without a cap, a rule left
@@ -115,7 +115,7 @@ function nextPeriod(frequency: RecurringFrequency, cursor: Date): Date {
 function occurrenceFor(
   schedule: ResolvedSchedule,
   start: Date,
-  holidays: HolidaySet
+  calendar: WorkCalendar
 ): Date | null {
   const range = getRange(schedule.frequency, start);
   switch (schedule.anchor) {
@@ -132,9 +132,9 @@ function occurrenceFor(
       return d;
     }
     case "first-working-day":
-      return firstWorkingDay(range.start, range.end, holidays);
+      return firstWorkingDay(range.start, range.end, calendar);
     case "last-working-day":
-      return lastWorkingDay(range.start, range.end, holidays);
+      return lastWorkingDay(range.start, range.end, calendar);
   }
 }
 
@@ -159,7 +159,7 @@ function resumeFrom(rule: RecurringRule, frequency: RecurringFrequency): Date {
  * Occurrences that are due (on or before `now`) but not yet applied, oldest
  * first, capped so a long absence can't flood the entry list.
  *
- * `holidays` may be empty — a rule with a working-day anchor then resolves
+ * `calendar` may be empty — a rule with a working-day anchor then resolves
  * against weekends only. Callers must not let that happen while a holiday fetch
  * is still in flight (see `useRecurring`): entries are frozen once written, so
  * a premature pass would permanently date one on a holiday.
@@ -167,7 +167,7 @@ function resumeFrom(rule: RecurringRule, frequency: RecurringFrequency): Date {
 export function dueDates(
   rule: RecurringRule,
   now: Date,
-  holidays: HolidaySet,
+  calendar: WorkCalendar,
   cap?: number
 ): string[] {
   if (!rule.enabled) return [];
@@ -184,7 +184,7 @@ export function dueDates(
     // null, and testing it would stop a rule forever on a holiday-only week.
     if (toISODate(cursor) > todayISO) break;
 
-    const occ = occurrenceFor(schedule, cursor, holidays);
+    const occ = occurrenceFor(schedule, cursor, calendar);
     if (occ) {
       const occISO = toISODate(occ);
       if (occISO <= todayISO && occISO >= rule.startDate) out.push(occISO);
@@ -204,12 +204,12 @@ export function dueDates(
  * than from wall-clock now: it must name the date that will actually be
  * written, not a date that has already been skipped past.
  */
-export function nextDue(rule: RecurringRule, holidays: HolidaySet): string | null {
+export function nextDue(rule: RecurringRule, calendar: WorkCalendar): string | null {
   const schedule = resolveSchedule(rule);
   let cursor = resumeFrom(rule, schedule.frequency);
 
   for (let i = 0; i < LOOKAHEAD[schedule.frequency]; i++) {
-    const occ = occurrenceFor(schedule, cursor, holidays);
+    const occ = occurrenceFor(schedule, cursor, calendar);
     if (occ) {
       const occISO = toISODate(occ);
       if (occISO >= rule.startDate) return occISO;

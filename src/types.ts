@@ -211,15 +211,25 @@ export interface Holiday {
   counties?: string[];
 }
 
+/** One year of a country's calendar exceptions. */
+export interface YearCalendar {
+  holidays: Holiday[];
+  /**
+   * Weekend dates that are working days anyway — Taiwan's 補行上班 make-up days.
+   * Empty for every country whose provider doesn't publish them.
+   */
+  workdays: string[];
+}
+
 /**
- * Holidays cached per country. Unlike FX rates these are near-immutable once
+ * Calendars cached per country. Unlike FX rates these are near-immutable once
  * published, so there's no age-based expiry: the cache is valid as long as it
  * covers the country and years being asked about.
  */
 export interface CachedHolidays {
   country: string;
-  /** Year ("2026") -> that year's holidays. */
-  years: Record<string, Holiday[]>;
-  /** ISO timestamp of when the holidays were fetched. */
+  /** Year ("2026") -> that year's calendar. */
+  years: Record<string, YearCalendar>;
+  /** ISO timestamp of when the calendars were fetched. */
   fetchedAt: string;
 }

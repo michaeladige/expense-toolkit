@@ -32,9 +32,11 @@ expenses, income, categories, budgets, reports, and settings are stored in
   week or month — the schedule payroll and direct debits actually use.
 - **Holiday calendar** — pick a country (and region, where it has holidays of
   its own) in Settings and the working-day rules above skip its public
-  holidays as well as weekends. Holidays are fetched once from
-  [Nager.Date](https://date.nager.at) and cached, so it keeps working offline.
-  With no country selected, working days are simply Mon–Fri.
+  holidays as well as weekends. Holidays are fetched once and cached, so it
+  keeps working offline. Most countries come from
+  [Nager.Date](https://date.nager.at); Taiwan comes from a mirror of the
+  government calendar and additionally honors its make-up working Saturdays
+  (補行上班). With no country selected, working days are simply Mon–Fri.
 - **Day / Week / Month views** with previous/next navigation and a "Today" jump.
 - **Income vs. expenses** — the summary shows income, expenses, and **net** for
   the selected period.
