@@ -72,7 +72,7 @@ export default function App() {
   useRecurring({
     recurring: store.recurring,
     applyRecurring: store.applyRecurring,
-    holidays: holidays.days,
+    calendar: holidays.calendar,
     holidayStatus: holidays.status,
   });
 
@@ -338,7 +338,7 @@ export default function App() {
               incomeCategories={store.incomeCategories}
               recurring={store.recurring}
               defaultCurrency={settings.baseCurrency}
-              holidays={holidays.days}
+              calendar={holidays.calendar}
               knownYears={holidays.knownYears}
               holidayCountry={settings.holidayCountry}
               onAdd={store.addRecurring}

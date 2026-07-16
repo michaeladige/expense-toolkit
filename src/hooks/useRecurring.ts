@@ -1,13 +1,13 @@
 import { useCallback, useEffect } from "react";
 import type { RecurringRule } from "../types";
 import { dueDates, isWorkingDayAnchor, resolveSchedule } from "../lib/recurring";
-import type { HolidaySet } from "../lib/workdays";
+import type { WorkCalendar } from "../lib/workdays";
 import type { HolidayStatus } from "./useHolidays";
 
 interface Args {
   recurring: RecurringRule[];
   applyRecurring: (rule: RecurringRule, dates: string[]) => void;
-  holidays: HolidaySet;
+  calendar: WorkCalendar;
   holidayStatus: HolidayStatus;
 }
 
@@ -29,7 +29,7 @@ interface Args {
 export function useRecurring({
   recurring,
   applyRecurring,
-  holidays,
+  calendar,
   holidayStatus,
 }: Args) {
   const holidaysPending = holidayStatus === "idle" || holidayStatus === "loading";
@@ -38,10 +38,10 @@ export function useRecurring({
     const now = new Date();
     for (const rule of recurring) {
       if (holidaysPending && isWorkingDayAnchor(resolveSchedule(rule).anchor)) continue;
-      const dates = dueDates(rule, now, holidays);
+      const dates = dueDates(rule, now, calendar);
       if (dates.length > 0) applyRecurring(rule, dates);
     }
-  }, [recurring, applyRecurring, holidays, holidaysPending]);
+  }, [recurring, applyRecurring, calendar, holidaysPending]);
 
   useEffect(() => {
     check();

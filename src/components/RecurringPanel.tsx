@@ -15,7 +15,7 @@ import {
   nextDue,
   resolveSchedule,
 } from "../lib/recurring";
-import type { HolidaySet } from "../lib/workdays";
+import type { WorkCalendar } from "../lib/workdays";
 import styles from "./RecurringPanel.module.css";
 
 interface Props {
@@ -23,7 +23,7 @@ interface Props {
   incomeCategories: Category[];
   recurring: RecurringRule[];
   defaultCurrency: string;
-  holidays: HolidaySet;
+  calendar: WorkCalendar;
   /** Years the holiday cache covers; a date outside them may still shift. */
   knownYears: ReadonlySet<number>;
   /** Undefined when no holiday calendar is configured. */
@@ -92,7 +92,7 @@ export function RecurringPanel({
   incomeCategories,
   recurring,
   defaultCurrency,
-  holidays,
+  calendar,
   knownYears,
   holidayCountry,
   onAdd,
@@ -180,7 +180,7 @@ export function RecurringPanel({
       ) : (
         <ul className={styles.list}>
           {recurring.map((rule) => {
-            const due = nextDue(rule, holidays);
+            const due = nextDue(rule, calendar);
             return (
               <li key={rule.id} className={styles.row}>
                 <div className={styles.rowHead}>
