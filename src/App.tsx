@@ -17,11 +17,13 @@ import {
 import { sumByCategoryInBase, totalInBase, totalsByMonthInBase } from "./lib/summary";
 import { topFavorites } from "./lib/favorites";
 import { gradeSavings, gradeSpending } from "./lib/grade";
+import { buildDayTypeBreakdown } from "./lib/daytype";
 import { PeriodSelector } from "./components/PeriodSelector";
 import { EntryForm } from "./components/EntryForm";
 import { EntryList } from "./components/EntryList";
 import { SummaryCards } from "./components/SummaryCards";
 import { CategoryChart } from "./components/CategoryChart";
+import { DayTypeAnalytics } from "./components/DayTypeAnalytics";
 import { TrendChart } from "./components/TrendChart";
 import { MonthGrades } from "./components/MonthGrades";
 import { BudgetPanel } from "./components/BudgetPanel";
@@ -199,6 +201,20 @@ export default function App() {
     });
   }, [store.expenses, period, refDate, settings.baseCurrency, rates]);
 
+  // All-time weekday / weekend / holiday spending split. Live, not a frozen
+  // snapshot like reports — the whole point is the cross-cutting pattern.
+  const dayTypeBreakdown = useMemo(
+    () =>
+      buildDayTypeBreakdown(
+        store.expenses,
+        holidays.calendar,
+        holidays.knownYears,
+        settings.baseCurrency,
+        rates
+      ),
+    [store.expenses, holidays.calendar, holidays.knownYears, settings.baseCurrency, rates]
+  );
+
   function handleSubmit(kind: EntryKind, data: Omit<Expense, "id" | "createdAt">) {
     if (editing) {
       // The form locks `kind` while editing, so an entry always updates in place.
@@ -314,6 +330,10 @@ export default function App() {
             />
             <CategoryChart
               data={categorySlices}
+              baseCurrency={settings.baseCurrency}
+            />
+            <DayTypeAnalytics
+              breakdown={dayTypeBreakdown}
               baseCurrency={settings.baseCurrency}
             />
             <MonthGrades
