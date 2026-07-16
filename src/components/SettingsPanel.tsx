@@ -10,6 +10,7 @@ import type {
 } from "../types";
 import type { BackupData } from "../lib/backup";
 import type { RateStatus } from "../hooks/useExchangeRates";
+import type { CountryOption, HolidayStatus } from "../hooks/useHolidays";
 import { CURRENCIES, OTHER_EXPENSE_ID, OTHER_INCOME_ID } from "../lib/constants";
 import { permission, requestPermission, supported } from "../lib/notify";
 import { appVersion } from "../lib/version";
@@ -24,6 +25,11 @@ interface Props {
   rateStatus: RateStatus;
   fetchedAt: string | null;
   onRefreshRates: () => void;
+  countries: CountryOption[];
+  holidayRegions: string[];
+  holidayStatus: HolidayStatus;
+  holidayFetchedAt: string | null;
+  onRefreshHolidays: () => void;
   categories: Category[];
   onAddCategory: (data: Omit<Category, "id">) => void;
   onUpdateCategory: (id: string, data: Partial<Omit<Category, "id">>) => void;
@@ -54,12 +60,26 @@ const RATE_TEXT: Record<RateStatus, string> = {
   error: "Rates unavailable",
 };
 
+const HOLIDAY_TEXT: Record<HolidayStatus, string> = {
+  off: "No calendar selected",
+  idle: "Not loaded",
+  loading: "Updating…",
+  live: "Holidays loaded",
+  cached: "Saved holidays (offline)",
+  error: "Holidays unavailable",
+};
+
 export function SettingsPanel({
   settings,
   onUpdateSettings,
   rateStatus,
   fetchedAt,
   onRefreshRates,
+  countries,
+  holidayRegions,
+  holidayStatus,
+  holidayFetchedAt,
+  onRefreshHolidays,
   categories,
   onAddCategory,
   onUpdateCategory,
@@ -200,6 +220,81 @@ export function SettingsPanel({
             ends — nothing is ever skipped, it may just arrive late.
             {!supported() &&
               " Your browser doesn't offer notifications here; on iOS, add the app to your home screen first."}
+          </p>
+        </section>
+
+        <section className={styles.section}>
+          <h3 className={styles.subheading}>Holidays</h3>
+          <div className="field">
+            <label htmlFor="holiday-country">Holiday calendar</label>
+            <select
+              id="holiday-country"
+              className="select"
+              value={settings.holidayCountry ?? ""}
+              onChange={(e) =>
+                onUpdateSettings({
+                  holidayCountry: e.target.value || undefined,
+                  // The old region belongs to the old country's code space.
+                  holidayRegion: undefined,
+                })
+              }
+            >
+              <option value="">None — working days skip weekends only</option>
+              {countries.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {holidayRegions.length > 0 && (
+            <div className="field">
+              <label htmlFor="holiday-region">Region</label>
+              <select
+                id="holiday-region"
+                className="select"
+                value={settings.holidayRegion ?? ""}
+                onChange={(e) =>
+                  onUpdateSettings({ holidayRegion: e.target.value || undefined })
+                }
+              >
+                <option value="">Nationwide holidays only</option>
+                {holidayRegions.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {settings.holidayCountry && (
+            <div className={styles.rates}>
+              <span>
+                {HOLIDAY_TEXT[holidayStatus]}
+                {holidayFetchedAt && (
+                  <span className="muted">
+                    {" "}
+                    · {new Date(holidayFetchedAt).toLocaleString()}
+                  </span>
+                )}
+              </span>
+              <button
+                className="btn"
+                onClick={onRefreshHolidays}
+                disabled={holidayStatus === "loading"}
+              >
+                Refresh
+              </button>
+            </div>
+          )}
+
+          <p className="muted" style={{ fontSize: "0.8rem" }}>
+            Used to place recurring transactions set to the first or last
+            working day of a week or month. Regions are listed by their standard
+            code, and only appear if they have holidays of their own — if yours
+            isn't there, its holidays are already covered nationwide.
           </p>
         </section>
 

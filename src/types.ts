@@ -68,9 +68,31 @@ export interface Budget {
   amount: number;
 }
 
+/** How often a recurring rule fires. A subset of PeriodType, so the date
+ *  helpers (getRange, shiftPeriod, ...) accept these directly. */
+export type RecurringFrequency = Extract<PeriodType, "week" | "month">;
+
 /**
- * A monthly recurring expense or income (e.g. rent, salary). Materializes
- * into real entries on app open/focus, same trigger as automatic reports.
+ * Where in its period a recurring rule lands. The working-day anchors are
+ * resolved against weekends plus the public holidays of `Settings.holidayCountry`.
+ */
+export type RecurringAnchor =
+  | "day-of-month"
+  | "day-of-week"
+  | "first-working-day"
+  | "last-working-day";
+
+/**
+ * A recurring expense or income (e.g. rent, salary). Materializes into real
+ * entries on app open/focus, same trigger as automatic reports.
+ *
+ * `frequency`, `anchor` and `dayOfWeek` are optional, and `dayOfMonth` became
+ * optional when they were added: rules stored before then (and JSON backups
+ * from then) have no such keys, and `useLocalStorage` doesn't merge defaults
+ * into a stored object. Absent `frequency`/`anchor` therefore mean "month" /
+ * "day-of-month" — the only schedule that used to exist. Don't read these
+ * fields directly; go through `resolveSchedule` in `lib/recurring.ts`, which
+ * applies the defaults and reconciles invalid combinations in one place.
  */
 export interface RecurringRule {
   id: string;
@@ -79,11 +101,19 @@ export interface RecurringRule {
   currency: string;
   categoryId: string;
   note?: string;
-  /** 1-31; clamped to the month's last day when it doesn't exist (e.g. 31 in April). */
-  dayOfMonth: number;
+  /** Absent = "month". */
+  frequency?: RecurringFrequency;
+  /** Absent = "day-of-month". */
+  anchor?: RecurringAnchor;
+  /** 1-31, only meaningful for the "day-of-month" anchor; clamped to the
+   *  month's last day when it doesn't exist (e.g. 31 in April). */
+  dayOfMonth?: number;
+  /** 0 = Sunday .. 6 = Saturday, only meaningful for the "day-of-week" anchor. */
+  dayOfWeek?: number;
   /** Local "YYYY-MM-DD"; occurrences before this date are never materialized. */
   startDate: string;
-  /** Local "YYYY-MM-DD" of the most recent occurrence applied, if any. */
+  /** Local "YYYY-MM-DD" of the most recent occurrence applied, if any. Only
+   *  the *period* it falls in is load-bearing — see `dueDates`. */
   lastApplied?: string;
   enabled: boolean;
 }
@@ -107,6 +137,16 @@ export interface Settings {
   mode?: ThemeMode;
   themeColor?: ThemeColor;
   pattern?: ThemePattern;
+  /**
+   * Holiday calendar used to resolve the working-day anchors of recurring
+   * rules. Both optional, same reason as the appearance fields above.
+   * `holidayCountry` absent means no holiday calendar at all: working days are
+   * then just Mon-Fri. `holidayRegion` absent means nationwide holidays only.
+   */
+  /** ISO 3166-1 alpha-2, e.g. "DE". */
+  holidayCountry?: string;
+  /** ISO 3166-2 subdivision, e.g. "DE-BY". */
+  holidayRegion?: string;
 }
 
 export interface ReportCategoryTotal {
@@ -157,5 +197,29 @@ export interface CachedRates {
   base: string;
   rates: RateMap;
   /** ISO timestamp of when the rates were fetched. */
+  fetchedAt: string;
+}
+
+/** One public holiday, narrowed to the fields the working-day math needs. */
+export interface Holiday {
+  /** Local "YYYY-MM-DD". */
+  date: string;
+  localName: string;
+  /** False when the holiday only applies to the subdivisions in `counties`. */
+  global: boolean;
+  /** ISO 3166-2 codes, e.g. ["DE-BY"]. Absent for nationwide holidays. */
+  counties?: string[];
+}
+
+/**
+ * Holidays cached per country. Unlike FX rates these are near-immutable once
+ * published, so there's no age-based expiry: the cache is valid as long as it
+ * covers the country and years being asked about.
+ */
+export interface CachedHolidays {
+  country: string;
+  /** Year ("2026") -> that year's holidays. */
+  years: Record<string, Holiday[]>;
+  /** ISO timestamp of when the holidays were fetched. */
   fetchedAt: string;
 }

@@ -25,9 +25,16 @@ expenses, income, categories, budgets, reports, and settings are stored in
   entry can also be **duplicated** (dated today) for quick repeat logging, and
   the form surfaces **quick-add chips** for your most frequent recent
   (category, amount) combos.
-- **Recurring transactions** — define a monthly expense or income (rent,
-  salary, a subscription) and it materializes as a real transaction on the
-  day it's due, the next time you open the app.
+- **Recurring transactions** — define a weekly or monthly expense or income
+  (rent, salary, a subscription) and it materializes as a real transaction on
+  the day it's due, the next time you open the app. A rule can fall on a fixed
+  day (the 15th, every Wednesday) or on the **first / last working day** of its
+  week or month — the schedule payroll and direct debits actually use.
+- **Holiday calendar** — pick a country (and region, where it has holidays of
+  its own) in Settings and the working-day rules above skip its public
+  holidays as well as weekends. Holidays are fetched once from
+  [Nager.Date](https://date.nager.at) and cached, so it keeps working offline.
+  With no country selected, working days are simply Mon–Fri.
 - **Day / Week / Month views** with previous/next navigation and a "Today" jump.
 - **Income vs. expenses** — the summary shows income, expenses, and **net** for
   the selected period.

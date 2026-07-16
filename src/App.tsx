@@ -4,6 +4,7 @@ import { useExpenses } from "./store/ExpenseContext";
 import { useExchangeRates, type RateStatus } from "./hooks/useExchangeRates";
 import { useAutoReports } from "./hooks/useAutoReports";
 import { useRecurring } from "./hooks/useRecurring";
+import { useHolidays } from "./hooks/useHolidays";
 import { useTheme } from "./hooks/useTheme";
 import {
   getRange,
@@ -45,6 +46,7 @@ export default function App() {
   const { rates, status, fetchedAt, refresh } = useExchangeRates(
     settings.baseCurrency
   );
+  const holidays = useHolidays(settings.holidayCountry, settings.holidayRegion);
 
   useTheme(settings);
 
@@ -70,6 +72,8 @@ export default function App() {
   useRecurring({
     recurring: store.recurring,
     applyRecurring: store.applyRecurring,
+    holidays: holidays.days,
+    holidayStatus: holidays.status,
   });
 
   // Expenses within the currently selected period.
@@ -334,6 +338,9 @@ export default function App() {
               incomeCategories={store.incomeCategories}
               recurring={store.recurring}
               defaultCurrency={settings.baseCurrency}
+              holidays={holidays.days}
+              knownYears={holidays.knownYears}
+              holidayCountry={settings.holidayCountry}
               onAdd={store.addRecurring}
               onUpdate={store.updateRecurring}
               onDelete={store.deleteRecurring}
@@ -349,6 +356,11 @@ export default function App() {
           rateStatus={status}
           fetchedAt={fetchedAt}
           onRefreshRates={refresh}
+          countries={holidays.countries}
+          holidayRegions={holidays.regions}
+          holidayStatus={holidays.status}
+          holidayFetchedAt={holidays.fetchedAt}
+          onRefreshHolidays={holidays.refresh}
           categories={store.categories}
           onAddCategory={store.addCategory}
           onUpdateCategory={store.updateCategory}

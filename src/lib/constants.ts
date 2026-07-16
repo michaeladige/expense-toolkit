@@ -10,6 +10,8 @@ export const STORAGE_KEYS = {
   recurring: "expense-toolkit:recurring",
   settings: "expense-toolkit:settings",
   rates: "expense-toolkit:rates",
+  holidays: "expense-toolkit:holidays",
+  holidayCountries: "expense-toolkit:holiday-countries",
 } as const;
 
 /**
