@@ -3,29 +3,24 @@ import { DAY_TYPES, adviceLine, hasActivity, verdictLine } from "../lib/daytype"
 import { formatMoney } from "../lib/currency";
 import styles from "./DayTypeAnalytics.module.css";
 
-const LABEL: Record<DayType, string> = {
-  weekday: "Weekdays",
-  weekend: "Weekends",
-  holiday: "Holidays",
+export const DAY_TYPE_LABEL: Record<DayType, string> = {
+  workday: "Workdays",
+  dayoff: "Days off",
 };
 
-const BAR_COLOR: Record<DayType, string> = {
-  weekday: "#3b82f6",
-  weekend: "#f59e0b",
-  holiday: "#ec4899",
+export const DAY_TYPE_COLOR: Record<DayType, string> = {
+  workday: "#3b82f6",
+  dayoff: "#f59e0b",
 };
 
 interface Props {
   breakdown: DayTypeBreakdown;
   baseCurrency: string;
+  onViewDetails: () => void;
 }
 
-export function DayTypeAnalytics({ breakdown, baseCurrency }: Props) {
-  const { stats, holidaysKnown, approximate } = breakdown;
-
-  // Holiday row only appears when a country is configured; without one it is
-  // always empty and would read as a bug.
-  const rows = DAY_TYPES.filter((t) => t !== "holiday" || holidaysKnown);
+export function DayTypeAnalytics({ breakdown, baseCurrency, onViewDetails }: Props) {
+  const { stats, approximate } = breakdown;
 
   return (
     <div className={`card ${styles.panel}`}>
@@ -36,13 +31,13 @@ export function DayTypeAnalytics({ breakdown, baseCurrency }: Props) {
 
       {!hasActivity(breakdown) ? (
         <p className={styles.empty}>
-          Log a few expenses and you'll see how weekdays, weekends, and holidays
+          Log a few expenses and you'll see how your workdays and days off
           compare.
         </p>
       ) : (
         <>
           <ul className={styles.rows}>
-            {rows.map((type) => {
+            {DAY_TYPES.map((type) => {
               const s = stats[type];
               return (
                 <li key={type} className={styles.row}>
@@ -50,11 +45,14 @@ export function DayTypeAnalytics({ breakdown, baseCurrency }: Props) {
                     <span className={styles.name}>
                       <span
                         className={styles.swatch}
-                        style={{ background: BAR_COLOR[type] }}
+                        style={{ background: DAY_TYPE_COLOR[type] }}
                       />
-                      {LABEL[type]}
-                      {type === "holiday" && approximate && (
-                        <span className={styles.approx} title="Some expenses fall outside the years we have holiday data for">
+                      {DAY_TYPE_LABEL[type]}
+                      {type === "dayoff" && approximate && (
+                        <span
+                          className={styles.approx}
+                          title="Some expenses fall outside the years we have holiday data for, so a few holidays may be counted as workdays"
+                        >
                           ~approx
                         </span>
                       )}
@@ -68,7 +66,7 @@ export function DayTypeAnalytics({ breakdown, baseCurrency }: Props) {
                       className={styles.barFill}
                       style={{
                         width: `${Math.round(s.share * 100)}%`,
-                        background: BAR_COLOR[type],
+                        background: DAY_TYPE_COLOR[type],
                       }}
                     />
                   </div>
@@ -84,15 +82,16 @@ export function DayTypeAnalytics({ breakdown, baseCurrency }: Props) {
             })}
           </ul>
 
-          {!holidaysKnown && (
-            <p className={styles.hint}>
-              Holiday spending appears once a holiday country's calendar is
-              available (set one in Settings).
-            </p>
-          )}
-
           <p className={styles.verdict}>{verdictLine(breakdown)}</p>
           <p className={styles.advice}>💡 {adviceLine(breakdown)}</p>
+
+          <button
+            type="button"
+            className={`btn btn-ghost ${styles.viewAll}`}
+            onClick={onViewDetails}
+          >
+            See the full breakdown →
+          </button>
         </>
       )}
     </div>

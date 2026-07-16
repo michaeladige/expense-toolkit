@@ -3,27 +3,28 @@ import type { WorkCalendar } from "./workdays";
 import { convert } from "./currency";
 import { fromISODate, toISODate } from "./dates";
 
-/** The three day types spending is split across. */
-export type DayType = "weekday" | "weekend" | "holiday";
+/** The two day types spending is split across: working days vs days off. */
+export type DayType = "workday" | "dayoff";
 
-export const DAY_TYPES: readonly DayType[] = ["weekday", "weekend", "holiday"];
+export const DAY_TYPES: readonly DayType[] = ["workday", "dayoff"];
 
 /**
  * Classify a date, reusing WorkCalendar semantics so this stays consistent
- * with the working-day / recurring logic:
- *   - an explicit make-up working day (Taiwan 補行上班) is a weekday
- *   - otherwise Sat/Sun is a weekend (a public holiday landing on a weekend
- *     stays "weekend" — it was already a day off)
- *   - otherwise a holiday date is a holiday
- *   - otherwise a plain weekday
+ * with the working-day / recurring logic. Weekends and public holidays are
+ * both "days off"; only a plain weekday (or an explicit Taiwan 補行上班 make-up
+ * day) counts as a working day:
+ *   - an explicit make-up working day is a workday
+ *   - otherwise Sat/Sun is a day off
+ *   - otherwise a public holiday is a day off
+ *   - otherwise a plain weekday is a workday
  */
 export function classifyDay(date: Date, calendar: WorkCalendar): DayType {
   const iso = toISODate(date);
-  if (calendar.workdays.has(iso)) return "weekday";
+  if (calendar.workdays.has(iso)) return "workday";
   const dow = date.getDay();
-  if (dow === 0 || dow === 6) return "weekend";
-  if (calendar.holidays.has(iso)) return "holiday";
-  return "weekday";
+  if (dow === 0 || dow === 6) return "dayoff";
+  if (calendar.holidays.has(iso)) return "dayoff";
+  return "workday";
 }
 
 export interface DayTypeStat {
@@ -38,25 +39,34 @@ export interface DayTypeStat {
   share: number;
 }
 
+/** One expense category's total, split across the two day types. */
+export interface CategoryDayTypeStat {
+  categoryId: string;
+  /** Base-currency total across both day types. */
+  total: number;
+  byType: Record<DayType, number>;
+}
+
 export interface DayTypeBreakdown {
   stats: Record<DayType, DayTypeStat>;
+  /** Per-category split, sorted by total spend descending. */
+  categories: CategoryDayTypeStat[];
   grandTotal: number;
   /**
-   * True when at least one expense falls in a year outside `knownYears` while a
-   * holiday country is configured — its holiday status is unknown, so the
-   * holiday split is approximate. Not set when no country is configured (a
-   * missing holiday split is then expected, not approximate).
+   * True when a holiday country is configured but at least one expense falls in
+   * a year outside `knownYears`: its holiday status is unknown, so a weekday
+   * holiday there is miscounted as a workday and the split is approximate. Not
+   * set when no country is configured (a holiday landing on a weekday then just
+   * reads as a workday, which is the documented Mon–Fri fallback).
    */
   approximate: boolean;
-  /** True when a holiday country is configured (knownYears non-empty). */
-  holidaysKnown: boolean;
 }
 
 /**
- * Split all-time expenses into weekday / weekend / holiday, in the base
- * currency. Per-day average uses the count of distinct days of that type that
- * actually had spending, not every such day in history — it answers "when I
- * spend on this kind of day, how much?".
+ * Split all-time expenses into working days vs days off, in the base currency,
+ * with a per-category breakdown alongside. Per-day average uses the count of
+ * distinct days of that type that actually had spending, not every such day in
+ * history — it answers "when I spend on this kind of day, how much?".
  */
 export function buildDayTypeBreakdown(
   expenses: Expense[],
@@ -65,12 +75,12 @@ export function buildDayTypeBreakdown(
   base: string,
   rates: RateMap
 ): DayTypeBreakdown {
-  const totals: Record<DayType, number> = { weekday: 0, weekend: 0, holiday: 0 };
+  const totals: Record<DayType, number> = { workday: 0, dayoff: 0 };
   const days: Record<DayType, Set<string>> = {
-    weekday: new Set(),
-    weekend: new Set(),
-    holiday: new Set(),
+    workday: new Set(),
+    dayoff: new Set(),
   };
+  const catMap = new Map<string, CategoryDayTypeStat>();
   let grandTotal = 0;
   let approximate = false;
   const holidaysKnown = knownYears.size > 0;
@@ -82,6 +92,15 @@ export function buildDayTypeBreakdown(
     totals[type] += amount;
     days[type].add(e.date);
     grandTotal += amount;
+
+    let cat = catMap.get(e.categoryId);
+    if (!cat) {
+      cat = { categoryId: e.categoryId, total: 0, byType: { workday: 0, dayoff: 0 } };
+      catMap.set(e.categoryId, cat);
+    }
+    cat.total += amount;
+    cat.byType[type] += amount;
+
     if (holidaysKnown && !knownYears.has(date.getFullYear())) approximate = true;
   }
 
@@ -98,7 +117,9 @@ export function buildDayTypeBreakdown(
     };
   }
 
-  return { stats, grandTotal, approximate, holidaysKnown };
+  const categories = [...catMap.values()].sort((a, b) => b.total - a.total);
+
+  return { stats, categories, grandTotal, approximate };
 }
 
 /** True when any day type recorded spending — the card's non-empty gate. */
@@ -107,9 +128,8 @@ export function hasActivity(b: DayTypeBreakdown): boolean {
 }
 
 const TYPE_NOUN: Record<DayType, string> = {
-  weekday: "weekdays",
-  weekend: "weekends",
-  holiday: "holidays",
+  workday: "workdays",
+  dayoff: "days off",
 };
 
 /** The day type with the highest per-day average, among those with activity. */
@@ -119,7 +139,7 @@ function topByAverage(b: DayTypeBreakdown): DayTypeStat | null {
   return active.reduce((hi, s) => (s.average > hi.average ? s : hi));
 }
 
-/** The next-highest per-day average below `top`, or null if `top` is alone. */
+/** The other day type, if it also has activity. */
 function runnerUp(b: DayTypeBreakdown, top: DayTypeStat): DayTypeStat | null {
   const rest = DAY_TYPES.map((t) => b.stats[t]).filter(
     (s) => s.activeDays > 0 && s.type !== top.type
@@ -139,17 +159,13 @@ function pick(options: string[], seed: number): string {
 }
 
 const SINGLE_TYPE_VERDICTS: Record<DayType, string[]> = {
-  weekday: [
-    "Every dollar you log lands on a weekday. A creature of pure routine.",
-    "All weekday spending. The weekend wallet is in witness protection.",
+  workday: [
+    "Every dollar lands on a workday. Your idea of a wild weekend is closing all the browser tabs.",
+    "100% workday spending. Saturdays and Sundays cost you literally nothing — deeply suspicious.",
   ],
-  weekend: [
-    "Every expense is a weekend expense. Monday–Friday you simply cease to exist.",
-    "100% weekend spending. The week is just the loading screen for Saturday.",
-  ],
-  holiday: [
-    "You only spend on holidays. An impressively festive data set.",
-    "All holiday spending — you treat the calendar's red days as a personal challenge.",
+  dayoff: [
+    "All your spending happens on days off. Work is just where you recover from your wallet.",
+    "Every expense is a day-off expense. Monday to Friday your card is basically in a coma.",
   ],
 };
 
@@ -171,8 +187,8 @@ export function verdictLine(b: DayTypeBreakdown): string {
   if (ratio < 1.15) {
     return pick(
       [
-        `Your ${topNoun} and ${otherNoun} spend at nearly the same clip — refreshingly consistent, or refreshingly doomed.`,
-        `${cap(topNoun)} and ${otherNoun} are neck and neck. Your wallet does not read the calendar.`,
+        `Workdays and days off cost you almost exactly the same — your wallet genuinely cannot read a calendar.`,
+        `Neck and neck. Working or free, the money escapes at the same heroic speed.`,
       ],
       seed
     );
@@ -180,16 +196,16 @@ export function verdictLine(b: DayTypeBreakdown): string {
   if (ratio >= 2 && Number.isFinite(ratio)) {
     return pick(
       [
-        `On ${topNoun} your day-rate is ${ratio.toFixed(1)}× your ${otherNoun}. The other days are just savings in disguise.`,
-        `${cap(topNoun)} cost you ${ratio.toFixed(1)}× what ${otherNoun} do. That's not a habit, that's a lifestyle.`,
+        `On ${topNoun} your day-rate is ${ratio.toFixed(1)}× your ${otherNoun}. The other days are just savings in a trench coat.`,
+        `${cap(topNoun)} cost ${ratio.toFixed(1)}× what ${otherNoun} do. That's not a spending pattern, that's a whole personality.`,
       ],
       seed
     );
   }
   return pick(
     [
-      `${cap(topNoun)} edge out ${otherNoun} as your priciest day type. Noted.`,
-      `You lean toward spending on ${topNoun} more than ${otherNoun}. Predictable, in a comforting way.`,
+      `${cap(topNoun)} edge out ${otherNoun} as your pricier day type. The calendar has learned your weaknesses.`,
+      `You lean toward spending on ${topNoun}. Bold of you to have a favorite kind of day to hemorrhage money.`,
     ],
     seed
   );
@@ -203,14 +219,52 @@ export function adviceLine(b: DayTypeBreakdown): string {
   if (!top) return "";
   const other = runnerUp(b, top);
   if (!other) {
-    return "Log a few more days and this splits into a real weekday-vs-weekend comparison.";
+    return "Log a few more days and this becomes a real workday-vs-days-off showdown.";
   }
   const ratio = other.average > 0 ? top.average / other.average : Infinity;
   const topNoun = TYPE_NOUN[top.type];
   if (ratio >= 1.5 && Number.isFinite(ratio)) {
-    return `Your ${topNoun} day-rate runs ${ratio.toFixed(1)}× the rest — deciding one "fun budget" number ahead of time tends to cap those days.`;
+    return `Your ${topNoun} day-rate runs ${ratio.toFixed(1)}× the rest — naming one "fun budget" number up front tends to tame those days.`;
   }
-  return "Your day types are fairly balanced — a single overall monthly budget will serve you better than fussing over which day it is.";
+  return "Your workdays and days off are fairly balanced — one overall monthly budget will serve you better than watching the calendar.";
+}
+
+/**
+ * A funny aside naming the category that does the most damage on days off (or
+ * on workdays, if days off are quiet). Deterministic like the lines above.
+ * `nameOf` resolves a category id to its display name.
+ */
+export function categoryQuip(
+  b: DayTypeBreakdown,
+  nameOf: (id: string) => string
+): string {
+  const seed = Math.round(b.grandTotal);
+  const topOff = maxByType(b, "dayoff");
+  if (topOff && topOff.byType.dayoff > 0) {
+    const name = nameOf(topOff.categoryId);
+    return pick(
+      [
+        `${name} is your signature day-off splurge. No notes.`,
+        `On your days off, ${name} does the most damage — and it knows it.`,
+      ],
+      seed
+    );
+  }
+  const topWork = maxByType(b, "workday");
+  if (topWork && topWork.byType.workday > 0) {
+    const name = nameOf(topWork.categoryId);
+    return `${name} is where your workdays quietly leak money.`;
+  }
+  return "";
+}
+
+/** The category with the highest spend of the given day type. */
+function maxByType(b: DayTypeBreakdown, type: DayType): CategoryDayTypeStat | null {
+  let best: CategoryDayTypeStat | null = null;
+  for (const c of b.categories) {
+    if (!best || c.byType[type] > best.byType[type]) best = c;
+  }
+  return best;
 }
 
 function cap(s: string): string {

@@ -25,6 +25,7 @@ import { AllEntriesPanel } from "./components/AllEntriesPanel";
 import { SummaryCards } from "./components/SummaryCards";
 import { CategoryChart } from "./components/CategoryChart";
 import { DayTypeAnalytics } from "./components/DayTypeAnalytics";
+import { DayTypeDetailsPanel } from "./components/DayTypeDetailsPanel";
 import { TrendChart } from "./components/TrendChart";
 import { MonthGrades } from "./components/MonthGrades";
 import { BudgetPanel } from "./components/BudgetPanel";
@@ -59,6 +60,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
   const [allEntriesOpen, setAllEntriesOpen] = useState(false);
+  const [dayTypeOpen, setDayTypeOpen] = useState(false);
 
   const { fresh, dismissFresh } = useAutoReports({
     expenses: store.expenses,
@@ -336,6 +338,7 @@ export default function App() {
               baseCurrency={settings.baseCurrency}
             />
             <DayTypeAnalytics
+              onViewDetails={() => setDayTypeOpen(true)}
               breakdown={dayTypeBreakdown}
               baseCurrency={settings.baseCurrency}
             />
@@ -431,6 +434,15 @@ export default function App() {
           onDelete={handleDelete}
           onDuplicate={handleDuplicate}
           onClose={() => setAllEntriesOpen(false)}
+        />
+      )}
+
+      {dayTypeOpen && (
+        <DayTypeDetailsPanel
+          breakdown={dayTypeBreakdown}
+          baseCurrency={settings.baseCurrency}
+          categoryById={store.categoryById}
+          onClose={() => setDayTypeOpen(false)}
         />
       )}
 
