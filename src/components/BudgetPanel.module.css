@@ -53,3 +53,9 @@
   border-top: 1px solid var(--border);
   padding-top: 1rem;
 }
+
+@media (max-width: 420px) {
+  .add {
+    grid-template-columns: 1fr;
+  }
+}

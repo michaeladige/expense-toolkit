@@ -158,34 +158,46 @@ export function RecurringPanel({
           </button>
         </div>
 
-        <div className={styles.grid}>
-          <input
-            className="input"
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="Amount"
-            value={form.amount}
-            onChange={(e) => update("amount", e.target.value)}
-            required
-          />
+        <div className={styles.amountRow}>
+          <div className="field">
+            <label htmlFor="recurring-amount">Amount</label>
+            <input
+              id="recurring-amount"
+              className="input"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              value={form.amount}
+              onChange={(e) => update("amount", e.target.value)}
+              required
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="recurring-currency">Currency</label>
+            <select
+              id="recurring-currency"
+              className="select"
+              value={form.currency}
+              onChange={(e) => update("currency", e.target.value)}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.code}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="field">
+          <label htmlFor="recurring-category">Category</label>
           <select
-            className="select"
-            value={form.currency}
-            onChange={(e) => update("currency", e.target.value)}
-            aria-label="Currency"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.code}
-              </option>
-            ))}
-          </select>
-          <select
+            id="recurring-category"
             className="select"
             value={form.categoryId}
             onChange={(e) => update("categoryId", e.target.value)}
-            aria-label="Category"
           >
             {activeCategories.map((c) => (
               <option key={c.id} value={c.id}>
@@ -194,28 +206,39 @@ export function RecurringPanel({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="field">
+          <label htmlFor="recurring-day">Day of month</label>
           <input
+            id="recurring-day"
             className="input"
             type="number"
+            inputMode="numeric"
             min="1"
             max="31"
-            placeholder="Day"
             value={form.dayOfMonth}
             onChange={(e) => update("dayOfMonth", e.target.value)}
-            aria-label="Day of month"
             required
           />
+        </div>
+
+        <div className="field">
+          <label htmlFor="recurring-note">Note (optional)</label>
           <input
+            id="recurring-note"
             className="input"
             type="text"
-            placeholder="Note (optional)"
+            placeholder="e.g. Rent"
             value={form.note}
             onChange={(e) => update("note", e.target.value)}
           />
-          <button type="submit" className="btn btn-primary">
-            Add
-          </button>
         </div>
+
+        <button type="submit" className="btn btn-primary">
+          Add
+        </button>
+
         <p className="muted" style={{ fontSize: "0.78rem" }}>
           Materializes as a real transaction each month on this day, next time
           the app is open. Day 29–31 falls back to the month's last day when

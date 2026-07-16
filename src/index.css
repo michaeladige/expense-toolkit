@@ -38,6 +38,9 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* A stray overflowing element on a narrow screen would otherwise make the
+     whole page scroll sideways instead of just clipping that one element. */
+  overflow-x: hidden;
 }
 
 body {
