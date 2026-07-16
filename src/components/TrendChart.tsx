@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import type { Category, PeriodType } from "../types";
 import { formatMoney } from "../lib/currency";
+import { useI18n } from "../lib/i18n/I18nContext";
+import { displayCategoryName } from "../lib/i18n/categoryName";
 import styles from "./TrendChart.module.css";
 
 export interface TrendBucket {
@@ -26,6 +28,7 @@ const PAD_BOTTOM = 22;
 const GAP = 2;
 
 export function TrendChart({ buckets, categories, baseCurrency, periodLabel }: Props) {
+  const { t, lang } = useI18n();
   const [hover, setHover] = useState<number | null>(null);
 
   // Stacking order: categories with the most spend across the visible
@@ -53,7 +56,7 @@ export function TrendChart({ buckets, categories, baseCurrency, periodLabel }: P
   return (
     <div className="card">
       <div className={styles.head}>
-        <h2>Spending trend</h2>
+        <h2>{t("trend.title")}</h2>
         <span className={styles.headValue}>
           {active && (
             <>
@@ -68,7 +71,10 @@ export function TrendChart({ buckets, categories, baseCurrency, periodLabel }: P
         viewBox={`0 0 ${W} ${H}`}
         className={styles.svg}
         role="img"
-        aria-label={`Spending over the last ${buckets.length} ${periodLabel}s, by category`}
+        aria-label={t("trend.aria", {
+          n: buckets.length,
+          unit: t(`unit.plural.${periodLabel}`),
+        })}
       >
         {/* baseline */}
         <line
@@ -90,7 +96,14 @@ export function TrendChart({ buckets, categories, baseCurrency, periodLabel }: P
               const h = (amount / max) * plotH;
               const y = cursorY - h;
               cursorY = y;
-              return { id: cat.id, name: cat.name, color: cat.color, y, h, amount };
+              return {
+                id: cat.id,
+                name: displayCategoryName(cat, lang),
+                color: cat.color,
+                y,
+                h,
+                amount,
+              };
             })
             .filter((s): s is NonNullable<typeof s> => s != null);
 
@@ -166,7 +179,7 @@ export function TrendChart({ buckets, categories, baseCurrency, periodLabel }: P
                 style={{ background: c.color }}
                 aria-hidden
               />
-              {c.name}
+              {displayCategoryName(c, lang)}
             </li>
           ))}
         </ul>

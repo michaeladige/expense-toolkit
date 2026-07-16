@@ -1,4 +1,5 @@
 import type { ThemeColor, ThemeMode, ThemePattern } from "./lib/theme";
+import type { Language } from "./lib/i18n/types";
 
 export type PeriodType = "day" | "week" | "month";
 
@@ -121,6 +122,12 @@ export interface RecurringRule {
 export interface Settings {
   /** ISO 4217 code used for combined totals and budgets. */
   baseCurrency: string;
+  /**
+   * UI language. Optional and absent-means-English, same as the appearance
+   * fields below: settings saved before it existed have no such key, and
+   * `useLocalStorage` doesn't merge defaults — so read sites fall back to "en".
+   */
+  language?: Language;
   /** Whether the user opted in to report notifications. */
   notificationsEnabled?: boolean;
   /**

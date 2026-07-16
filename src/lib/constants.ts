@@ -53,6 +53,7 @@ export const DEFAULT_INCOME_CATEGORIES: Category[] = [
 
 export const DEFAULT_SETTINGS: Settings = {
   baseCurrency: "USD",
+  language: "en",
 };
 
 /**

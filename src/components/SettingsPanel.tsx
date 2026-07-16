@@ -14,6 +14,7 @@ import type { CountryOption, HolidayStatus } from "../hooks/useHolidays";
 import { CURRENCIES, OTHER_EXPENSE_ID, OTHER_INCOME_ID } from "../lib/constants";
 import { permission, requestPermission, supported } from "../lib/notify";
 import { appVersion } from "../lib/version";
+import { useI18n } from "../lib/i18n/I18nContext";
 import { AppearancePanel } from "./AppearancePanel";
 import { CategoryManager } from "./CategoryManager";
 import { DataControls } from "./DataControls";
@@ -53,20 +54,20 @@ interface Props {
 }
 
 const RATE_TEXT: Record<RateStatus, string> = {
-  idle: "Not loaded",
-  loading: "Updating…",
-  live: "Live rates",
-  cached: "Cached rates (offline)",
-  error: "Rates unavailable",
+  idle: "rate.status.idle",
+  loading: "rate.status.loading",
+  live: "rate.status.live",
+  cached: "rate.status.cached",
+  error: "rate.status.error",
 };
 
 const HOLIDAY_TEXT: Record<HolidayStatus, string> = {
-  off: "No calendar selected",
-  idle: "Not loaded",
-  loading: "Updating…",
-  live: "Holidays loaded",
-  cached: "Saved holidays (offline)",
-  error: "Holidays unavailable",
+  off: "holiday.status.off",
+  idle: "holiday.status.idle",
+  loading: "holiday.status.loading",
+  live: "holiday.status.live",
+  cached: "holiday.status.cached",
+  error: "holiday.status.error",
 };
 
 export function SettingsPanel({
@@ -101,6 +102,7 @@ export function SettingsPanel({
   onRestoreAll,
   onClose,
 }: Props) {
+  const { t, locale } = useI18n();
   const [perm, setPerm] = useState(permission);
 
   /** Permission must be requested from a user gesture — iOS Safari rejects it otherwise. */
@@ -116,14 +118,14 @@ export function SettingsPanel({
       <aside
         className={styles.drawer}
         role="dialog"
-        aria-label="Settings"
+        aria-label={t("settings.title")}
         aria-modal="true"
       >
         <header className={styles.header}>
-          <h2 className={styles.heading}>Settings</h2>
+          <h2 className={styles.heading}>{t("settings.title")}</h2>
           <button
             className="btn btn-ghost btn-icon"
-            aria-label="Close settings"
+            aria-label={t("settings.closeAria")}
             onClick={onClose}
           >
             ✕
@@ -132,7 +134,7 @@ export function SettingsPanel({
 
         <section className={styles.section}>
           <div className="field">
-            <label htmlFor="base-currency">Base currency</label>
+            <label htmlFor="base-currency">{t("settings.baseCurrency")}</label>
             <select
               id="base-currency"
               className="select"
@@ -148,17 +150,17 @@ export function SettingsPanel({
               ))}
             </select>
             <p className="muted" style={{ fontSize: "0.8rem" }}>
-              Combined totals and budgets are shown in this currency.
+              {t("settings.baseCurrencyHelp")}
             </p>
           </div>
 
           <div className={styles.rates}>
             <span>
-              {RATE_TEXT[rateStatus]}
+              {t(RATE_TEXT[rateStatus])}
               {fetchedAt && (
                 <span className="muted">
                   {" "}
-                  · {new Date(fetchedAt).toLocaleString()}
+                  · {new Date(fetchedAt).toLocaleString(locale)}
                 </span>
               )}
             </span>
@@ -167,13 +169,13 @@ export function SettingsPanel({
               onClick={onRefreshRates}
               disabled={rateStatus === "loading"}
             >
-              Refresh
+              {t("settings.refresh")}
             </button>
           </div>
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.subheading}>Appearance</h3>
+          <h3 className={styles.subheading}>{t("settings.appearance")}</h3>
           <AppearancePanel
             settings={settings}
             onUpdateSettings={onUpdateSettings}
@@ -181,16 +183,16 @@ export function SettingsPanel({
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.subheading}>Reports</h3>
+          <h3 className={styles.subheading}>{t("settings.reports")}</h3>
           <div className={styles.rates}>
             <span>
               {perm === "granted" && settings.notificationsEnabled
-                ? "Notifications on"
+                ? t("settings.notifOn")
                 : perm === "denied"
-                  ? "Notifications blocked in your browser"
+                  ? t("settings.notifBlocked")
                   : perm === "unsupported"
-                    ? "Notifications unavailable here"
-                    : "Notifications off"}
+                    ? t("settings.notifUnsupported")
+                    : t("settings.notifOff")}
             </span>
             {perm === "granted" ? (
               <button
@@ -201,7 +203,7 @@ export function SettingsPanel({
                   })
                 }
               >
-                {settings.notificationsEnabled ? "Turn off" : "Turn on"}
+                {settings.notificationsEnabled ? t("settings.turnOff") : t("settings.turnOn")}
               </button>
             ) : (
               <button
@@ -209,24 +211,20 @@ export function SettingsPanel({
                 onClick={enableNotifications}
                 disabled={perm !== "default"}
               >
-                Enable
+                {t("settings.enable")}
               </button>
             )}
           </div>
           <p className="muted" style={{ fontSize: "0.8rem" }}>
-            A report is written for each week and month that finishes. Because
-            everything runs in your browser with no server, reports are produced
-            the next time you open the app rather than at the moment the period
-            ends — nothing is ever skipped, it may just arrive late.
-            {!supported() &&
-              " Your browser doesn't offer notifications here; on iOS, add the app to your home screen first."}
+            {t("settings.reportsHelp")}
+            {!supported() && t("settings.reportsHelpIos")}
           </p>
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.subheading}>Holidays</h3>
+          <h3 className={styles.subheading}>{t("settings.holidays")}</h3>
           <div className="field">
-            <label htmlFor="holiday-country">Holiday calendar</label>
+            <label htmlFor="holiday-country">{t("settings.holidayCalendar")}</label>
             <select
               id="holiday-country"
               className="select"
@@ -239,7 +237,7 @@ export function SettingsPanel({
                 })
               }
             >
-              <option value="">None — working days skip weekends only</option>
+              <option value="">{t("settings.holidayNone")}</option>
               {countries.map((c) => (
                 <option key={c.code} value={c.code}>
                   {c.name}
@@ -250,7 +248,7 @@ export function SettingsPanel({
 
           {holidayRegions.length > 0 && (
             <div className="field">
-              <label htmlFor="holiday-region">Region</label>
+              <label htmlFor="holiday-region">{t("settings.region")}</label>
               <select
                 id="holiday-region"
                 className="select"
@@ -259,7 +257,7 @@ export function SettingsPanel({
                   onUpdateSettings({ holidayRegion: e.target.value || undefined })
                 }
               >
-                <option value="">Nationwide holidays only</option>
+                <option value="">{t("settings.regionNone")}</option>
                 {holidayRegions.map((r) => (
                   <option key={r} value={r}>
                     {r}
@@ -272,11 +270,11 @@ export function SettingsPanel({
           {settings.holidayCountry && (
             <div className={styles.rates}>
               <span>
-                {HOLIDAY_TEXT[holidayStatus]}
+                {t(HOLIDAY_TEXT[holidayStatus])}
                 {holidayFetchedAt && (
                   <span className="muted">
                     {" "}
-                    · {new Date(holidayFetchedAt).toLocaleString()}
+                    · {new Date(holidayFetchedAt).toLocaleString(locale)}
                   </span>
                 )}
               </span>
@@ -285,21 +283,18 @@ export function SettingsPanel({
                 onClick={onRefreshHolidays}
                 disabled={holidayStatus === "loading"}
               >
-                Refresh
+                {t("settings.refresh")}
               </button>
             </div>
           )}
 
           <p className="muted" style={{ fontSize: "0.8rem" }}>
-            Used to place recurring transactions set to the first or last
-            working day of a week or month. Regions are listed by their standard
-            code, and only appear if they have holidays of their own — if yours
-            isn't there, its holidays are already covered nationwide.
+            {t("settings.holidayHelp")}
           </p>
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.subheading}>Expense categories</h3>
+          <h3 className={styles.subheading}>{t("settings.expenseCategories")}</h3>
           <CategoryManager
             categories={categories}
             protectedId={OTHER_EXPENSE_ID}
@@ -310,7 +305,7 @@ export function SettingsPanel({
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.subheading}>Income categories</h3>
+          <h3 className={styles.subheading}>{t("settings.incomeCategories")}</h3>
           <CategoryManager
             categories={incomeCategories}
             protectedId={OTHER_INCOME_ID}
@@ -321,7 +316,7 @@ export function SettingsPanel({
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.subheading}>Data</h3>
+          <h3 className={styles.subheading}>{t("settings.data")}</h3>
           <DataControls
             expenses={expenses}
             incomes={incomes}
@@ -341,9 +336,9 @@ export function SettingsPanel({
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.subheading}>About</h3>
+          <h3 className={styles.subheading}>{t("settings.about")}</h3>
           <p className="muted" style={{ fontSize: "0.8rem" }}>
-            Expense Toolkit · {appVersion}
+            {t("settings.aboutLine", { version: appVersion })}
           </p>
         </section>
       </aside>

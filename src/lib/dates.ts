@@ -113,34 +113,44 @@ export interface PeriodBucket extends DateRange {
 export function getRecentPeriods(
   period: PeriodType,
   ref: Date,
-  count: number
+  count: number,
+  locale?: string
 ): PeriodBucket[] {
   const buckets: PeriodBucket[] = [];
   for (let i = count - 1; i >= 0; i--) {
     let cursor = ref;
     for (let k = 0; k < i; k++) cursor = shiftPeriod(period, cursor, -1);
     const range = getRange(period, cursor);
-    buckets.push({ ...range, label: formatBucketLabel(period, range.start) });
+    buckets.push({ ...range, label: formatBucketLabel(period, range.start, locale) });
   }
   return buckets;
 }
 
-/** Compact label for a trend-chart bucket. */
-export function formatBucketLabel(period: PeriodType, start: Date): string {
+/** Compact label for a trend-chart bucket. `locale` follows the UI language;
+ *  an unknown tag falls back to the platform default rather than throwing. */
+export function formatBucketLabel(
+  period: PeriodType,
+  start: Date,
+  locale?: string
+): string {
   if (period === "day") {
-    return start.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+    return start.toLocaleDateString(locale, { day: "numeric", month: "short" });
   }
   if (period === "month") {
-    return start.toLocaleDateString(undefined, { month: "short" });
+    return start.toLocaleDateString(locale, { month: "short" });
   }
-  return start.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return start.toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
 /** Human-friendly label for the current period selection. */
-export function formatPeriodLabel(period: PeriodType, ref: Date): string {
+export function formatPeriodLabel(
+  period: PeriodType,
+  ref: Date,
+  locale?: string
+): string {
   const { start, end } = getRange(period, ref);
   if (period === "day") {
-    return start.toLocaleDateString(undefined, {
+    return start.toLocaleDateString(locale, {
       weekday: "short",
       month: "short",
       day: "numeric",
@@ -148,7 +158,7 @@ export function formatPeriodLabel(period: PeriodType, ref: Date): string {
     });
   }
   if (period === "month") {
-    return start.toLocaleDateString(undefined, {
+    return start.toLocaleDateString(locale, {
       month: "long",
       year: "numeric",
     });
@@ -156,8 +166,8 @@ export function formatPeriodLabel(period: PeriodType, ref: Date): string {
   // week
   const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
   const sameYear = start.getFullYear() === end.getFullYear();
-  const startStr = start.toLocaleDateString(undefined, opts);
-  const endStr = end.toLocaleDateString(undefined, {
+  const startStr = start.toLocaleDateString(locale, opts);
+  const endStr = end.toLocaleDateString(locale, {
     ...opts,
     year: sameYear ? undefined : "numeric",
   });

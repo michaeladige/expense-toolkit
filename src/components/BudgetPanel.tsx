@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { Budget, Category } from "../types";
 import { formatMoney } from "../lib/currency";
+import { useI18n } from "../lib/i18n/I18nContext";
+import { displayCategoryName } from "../lib/i18n/categoryName";
 import styles from "./BudgetPanel.module.css";
 
 interface Props {
@@ -32,12 +34,14 @@ export function BudgetPanel({
   onSetBudget,
   onRemoveBudget,
 }: Props) {
+  const { t, lang } = useI18n();
   const [catId, setCatId] = useState<string>("all");
   const [amount, setAmount] = useState<string>("");
 
   function labelFor(id: string): string {
-    if (id === "all") return "Overall";
-    return categories.find((c) => c.id === id)?.name ?? "Unknown";
+    if (id === "all") return t("budget.overall");
+    const cat = categories.find((c) => c.id === id);
+    return cat ? displayCategoryName(cat, lang) : t("budget.unknown");
   }
   function spentFor(id: string): number {
     return id === "all" ? monthTotal : monthSpentByCategory[id] ?? 0;
@@ -57,10 +61,10 @@ export function BudgetPanel({
 
   return (
     <div className="card">
-      <h2>Budgets · {monthLabel}</h2>
+      <h2>{t("budget.title", { month: monthLabel })}</h2>
 
       {sorted.length === 0 ? (
-        <p className="empty">No budgets set. Add one below.</p>
+        <p className="empty">{t("budget.empty")}</p>
       ) : (
         <ul className={styles.list}>
           {sorted.map((b) => {
@@ -77,7 +81,7 @@ export function BudgetPanel({
                   </span>
                   <button
                     className="btn btn-ghost btn-icon btn-danger"
-                    aria-label={`Remove ${labelFor(b.categoryId)} budget`}
+                    aria-label={t("budget.removeAria", { name: labelFor(b.categoryId) })}
                     onClick={() => onRemoveBudget(b.id)}
                   >
                     ✕
@@ -91,7 +95,7 @@ export function BudgetPanel({
                 </div>
                 {ratio >= 1 && (
                   <span className={styles.over}>
-                    Over by {formatMoney(spent - b.amount, baseCurrency)}
+                    {t("budget.over", { amount: formatMoney(spent - b.amount, baseCurrency) })}
                   </span>
                 )}
               </li>
@@ -105,12 +109,12 @@ export function BudgetPanel({
           className="select"
           value={catId}
           onChange={(e) => setCatId(e.target.value)}
-          aria-label="Budget category"
+          aria-label={t("budget.categoryAria")}
         >
-          <option value="all">Overall</option>
+          <option value="all">{t("budget.overall")}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
+              {displayCategoryName(c, lang)}
             </option>
           ))}
         </select>
@@ -119,12 +123,12 @@ export function BudgetPanel({
           type="number"
           min="0"
           step="0.01"
-          placeholder={`Limit (${baseCurrency})`}
+          placeholder={t("budget.limitPlaceholder", { currency: baseCurrency })}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
         <button type="submit" className="btn btn-primary">
-          Set
+          {t("budget.set")}
         </button>
       </form>
     </div>

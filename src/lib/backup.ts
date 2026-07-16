@@ -40,9 +40,19 @@ export function buildBackup(data: BackupData): BackupFile {
   };
 }
 
+/** Parse failures as codes, translated at the UI boundary. */
+export type BackupErrorCode =
+  | "json"
+  | "notBackup"
+  | "version"
+  | "missingData"
+  | "malformed"
+  | "malformedTx"
+  | "malformedCat";
+
 export interface ParsedBackup {
   data: BackupData | null;
-  error?: string;
+  error?: BackupErrorCode;
 }
 
 function isEntryLike(v: unknown): v is { amount: unknown; date: unknown; categoryId: unknown } {
@@ -68,7 +78,7 @@ export function parseBackup(text: string): ParsedBackup {
   try {
     parsed = JSON.parse(text);
   } catch {
-    return { data: null, error: "That file isn't valid JSON." };
+    return { data: null, error: "json" };
   }
 
   if (
@@ -76,15 +86,15 @@ export function parseBackup(text: string): ParsedBackup {
     parsed === null ||
     (parsed as Record<string, unknown>).app !== APP_ID
   ) {
-    return { data: null, error: "That doesn't look like an Expense Toolkit backup file." };
+    return { data: null, error: "notBackup" };
   }
   if ((parsed as Record<string, unknown>).version !== VERSION) {
-    return { data: null, error: "This backup was made with an unsupported version." };
+    return { data: null, error: "version" };
   }
 
   const data = (parsed as Record<string, unknown>).data;
   if (typeof data !== "object" || data === null) {
-    return { data: null, error: "Backup file is missing its data." };
+    return { data: null, error: "missingData" };
   }
   const d = data as Record<string, unknown>;
 
@@ -110,14 +120,14 @@ export function parseBackup(text: string): ParsedBackup {
     typeof settings !== "object" ||
     settings === null
   ) {
-    return { data: null, error: "Backup file is malformed (missing or invalid sections)." };
+    return { data: null, error: "malformed" };
   }
 
   if (!expenses.every(isEntryLike) || !incomes.every(isEntryLike)) {
-    return { data: null, error: "Backup file has malformed transactions." };
+    return { data: null, error: "malformedTx" };
   }
   if (!categories.every(isCategoryLike) || !incomeCategories.every(isCategoryLike)) {
-    return { data: null, error: "Backup file has malformed categories." };
+    return { data: null, error: "malformedCat" };
   }
 
   return {

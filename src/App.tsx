@@ -18,6 +18,8 @@ import { sumByCategoryInBase, totalInBase, totalsByMonthInBase } from "./lib/sum
 import { topFavorites } from "./lib/favorites";
 import { gradeSavings, gradeSpending } from "./lib/grade";
 import { buildDayTypeBreakdown } from "./lib/daytype";
+import { I18nProvider } from "./lib/i18n/I18nContext";
+import { LOCALES, translate } from "./lib/i18n/translate";
 import { PeriodSelector } from "./components/PeriodSelector";
 import { EntryForm } from "./components/EntryForm";
 import { EntryList } from "./components/EntryList";
@@ -36,17 +38,21 @@ import { ReportToast } from "./components/ReportToast";
 import { UpdatePrompt } from "./components/UpdatePrompt";
 import styles from "./App.module.css";
 
-const RATE_PILL: Record<RateStatus, { label: string; cls: string }> = {
-  idle: { label: "Rates", cls: "" },
-  loading: { label: "Updating…", cls: "" },
-  live: { label: "Live rates", cls: "pill-live" },
-  cached: { label: "Cached rates", cls: "pill-cached" },
-  error: { label: "Rates offline", cls: "pill-error" },
+const RATE_PILL: Record<RateStatus, { key: string; cls: string }> = {
+  idle: { key: "rate.pill.idle", cls: "" },
+  loading: { key: "rate.pill.loading", cls: "" },
+  live: { key: "rate.pill.live", cls: "pill-live" },
+  cached: { key: "rate.pill.cached", cls: "pill-cached" },
+  error: { key: "rate.pill.error", cls: "pill-error" },
 };
 
 export default function App() {
   const store = useExpenses();
   const { settings } = store;
+  const lang = settings.language ?? "en";
+  const locale = LOCALES[lang];
+  const t = (key: string, params?: Record<string, string | number>) =>
+    translate(lang, key, params);
   const { rates, status, fetchedAt, refresh } = useExchangeRates(
     settings.baseCurrency
   );
@@ -187,7 +193,7 @@ export default function App() {
   // category too, so the bars can stack the same way the pie chart does.
   const trendBuckets = useMemo(() => {
     const counts: Record<PeriodType, number> = { day: 14, week: 8, month: 12 };
-    const buckets = getRecentPeriods(period, refDate, counts[period]);
+    const buckets = getRecentPeriods(period, refDate, counts[period], locale);
     const selected = getRange(period, refDate);
     return buckets.map((b) => {
       const inRange = store.expenses.filter((e) => isWithinRange(e.date, b));
@@ -203,7 +209,7 @@ export default function App() {
         current: b.start.getTime() === selected.start.getTime(),
       };
     });
-  }, [store.expenses, period, refDate, settings.baseCurrency, rates]);
+  }, [store.expenses, period, refDate, settings.baseCurrency, rates, locale]);
 
   // All-time weekday / weekend / holiday spending split. Live, not a frozen
   // snapshot like reports — the whole point is the cross-cutting pattern.
@@ -255,32 +261,31 @@ export default function App() {
   const pill = RATE_PILL[status];
 
   return (
+    <I18nProvider lang={lang}>
     <div className={styles.app}>
       <header className={styles.topbar}>
         <div className={styles.brand}>
           <span className={styles.logo}>💸</span>
           <div>
-            <h1 className={styles.title}>Expense Toolkit</h1>
-            <span className={styles.tagline}>
-              Track spending across day, week &amp; month
-            </span>
+            <h1 className={styles.title}>{t("app.title")}</h1>
+            <span className={styles.tagline}>{t("app.tagline")}</span>
           </div>
         </div>
         <div className={styles.topActions}>
           <button
             className={`pill ${pill.cls}`}
             onClick={refresh}
-            title="Exchange-rate status — click to refresh"
+            title={t("app.rateTitle")}
           >
             <span className="dot" />
-            {pill.label}
+            {t(pill.key)}
           </button>
           <button className="btn" onClick={() => setReportsOpen(true)}>
-            📊 Reports
+            {t("app.reports")}
             {store.reports.length > 0 && ` (${store.reports.length})`}
           </button>
           <button className="btn" onClick={() => setSettingsOpen(true)}>
-            ⚙ Settings
+            {t("app.settings")}
           </button>
         </div>
       </header>
@@ -347,7 +352,7 @@ export default function App() {
               savings={savingsGrade}
               monthTotal={monthData.total}
               baseCurrency={settings.baseCurrency}
-              monthLabel={formatPeriodLabel("month", refDate)}
+              monthLabel={formatPeriodLabel("month", refDate, locale)}
             />
             <BudgetPanel
               categories={store.categories}
@@ -355,7 +360,7 @@ export default function App() {
               monthSpentByCategory={monthData.byCategory}
               monthTotal={monthData.total}
               baseCurrency={settings.baseCurrency}
-              monthLabel={formatPeriodLabel("month", refDate)}
+              monthLabel={formatPeriodLabel("month", refDate, locale)}
               onSetBudget={store.setBudget}
               onRemoveBudget={store.removeBudget}
             />
@@ -426,7 +431,7 @@ export default function App() {
           incomeCategories={store.incomeCategories}
           baseCurrency={settings.baseCurrency}
           rates={rates}
-          periodLabel={formatPeriodLabel(period, refDate)}
+          periodLabel={formatPeriodLabel(period, refDate, locale)}
           onEdit={(e) => {
             setAllEntriesOpen(false);
             setEditing(e);
@@ -458,5 +463,6 @@ export default function App() {
         <UpdatePrompt />
       </div>
     </div>
+    </I18nProvider>
   );
 }

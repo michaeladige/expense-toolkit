@@ -1,11 +1,13 @@
 import type { DayType, DayTypeBreakdown } from "../lib/daytype";
 import { DAY_TYPES, adviceLine, hasActivity, verdictLine } from "../lib/daytype";
 import { formatMoney } from "../lib/currency";
+import { useI18n } from "../lib/i18n/I18nContext";
 import styles from "./DayTypeAnalytics.module.css";
 
+/** i18n keys for each day type's label; translate at the render site. */
 export const DAY_TYPE_LABEL: Record<DayType, string> = {
-  workday: "Workdays",
-  dayoff: "Days off",
+  workday: "dayType.workdays",
+  dayoff: "dayType.daysOff",
 };
 
 export const DAY_TYPE_COLOR: Record<DayType, string> = {
@@ -20,20 +22,18 @@ interface Props {
 }
 
 export function DayTypeAnalytics({ breakdown, baseCurrency, onViewDetails }: Props) {
+  const { t, daytype } = useI18n();
   const { stats, approximate } = breakdown;
 
   return (
     <div className={`card ${styles.panel}`}>
       <div className={styles.head}>
-        <h2>When you spend</h2>
-        <span className={styles.sub}>All-time · avg = per day you spent</span>
+        <h2>{t("dayType.title")}</h2>
+        <span className={styles.sub}>{t("dayType.subtitle")}</span>
       </div>
 
       {!hasActivity(breakdown) ? (
-        <p className={styles.empty}>
-          Log a few expenses and you'll see how your workdays and days off
-          compare.
-        </p>
+        <p className={styles.empty}>{t("dayType.empty")}</p>
       ) : (
         <>
           <ul className={styles.rows}>
@@ -47,13 +47,13 @@ export function DayTypeAnalytics({ breakdown, baseCurrency, onViewDetails }: Pro
                         className={styles.swatch}
                         style={{ background: DAY_TYPE_COLOR[type] }}
                       />
-                      {DAY_TYPE_LABEL[type]}
+                      {t(DAY_TYPE_LABEL[type])}
                       {type === "dayoff" && approximate && (
                         <span
                           className={styles.approx}
-                          title="Some expenses fall outside the years we have holiday data for, so a few holidays may be counted as workdays"
+                          title={t("dayType.approxTitle")}
                         >
-                          ~approx
+                          {t("dayType.approx")}
                         </span>
                       )}
                     </span>
@@ -71,10 +71,12 @@ export function DayTypeAnalytics({ breakdown, baseCurrency, onViewDetails }: Pro
                     />
                   </div>
                   <div className={styles.meta}>
-                    <span>{formatMoney(s.average, baseCurrency)}/day</span>
+                    <span>{t("dayType.perDay", { money: formatMoney(s.average, baseCurrency) })}</span>
                     <span>
-                      {s.activeDays} day{s.activeDays === 1 ? "" : "s"} ·{" "}
-                      {Math.round(s.share * 100)}%
+                      {t("dayType.days", {
+                        n: s.activeDays,
+                        pct: Math.round(s.share * 100),
+                      })}
                     </span>
                   </div>
                 </li>
@@ -82,15 +84,15 @@ export function DayTypeAnalytics({ breakdown, baseCurrency, onViewDetails }: Pro
             })}
           </ul>
 
-          <p className={styles.verdict}>{verdictLine(breakdown)}</p>
-          <p className={styles.advice}>💡 {adviceLine(breakdown)}</p>
+          <p className={styles.verdict}>{verdictLine(breakdown, daytype)}</p>
+          <p className={styles.advice}>💡 {adviceLine(breakdown, daytype)}</p>
 
           <button
             type="button"
             className={`btn btn-ghost ${styles.viewAll}`}
             onClick={onViewDetails}
           >
-            See the full breakdown →
+            {t("dayType.viewAll")}
           </button>
         </>
       )}

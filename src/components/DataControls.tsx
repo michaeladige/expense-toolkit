@@ -8,10 +8,30 @@ import type {
   Report,
   Settings,
 } from "../types";
-import { csvToEntries, entriesToCSV } from "../lib/csv";
+import { csvToEntries, entriesToCSV, type ImportError } from "../lib/csv";
 import { buildBackup, parseBackup, type BackupData } from "../lib/backup";
 import { todayISO } from "../lib/dates";
+import { useI18n } from "../lib/i18n/I18nContext";
+import type { TFn } from "../lib/i18n/translate";
 import styles from "./DataControls.module.css";
+
+/** Turn a structured import error into a translated message. */
+function importErrorText(e: ImportError, t: TFn): string {
+  switch (e.code) {
+    case "empty":
+      return t("csv.error.empty");
+    case "missingColumns":
+      return t("csv.error.missingColumns");
+    case "invalidDate":
+      return t("csv.error.invalidDate", { row: e.row, value: e.value });
+    case "invalidAmount":
+      return t("csv.error.invalidAmount", { row: e.row });
+    case "missingCurrency":
+      return t("csv.error.missingCurrency", { row: e.row });
+    case "unknownType":
+      return t("csv.error.unknownType", { row: e.row, value: e.value });
+  }
+}
 
 interface Props {
   expenses: Expense[];
@@ -46,6 +66,7 @@ export function DataControls({
   onClearAll,
   onRestoreAll,
 }: Props) {
+  const { t } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const backupFileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -74,9 +95,15 @@ export function DataControls({
       if (parsedExpenses.length > 0) onImportExpenses(parsedExpenses);
       if (parsedIncomes.length > 0) onImportIncomes(parsedIncomes);
       const parts = [
-        `Imported ${parsedExpenses.length} expense(s), ${parsedIncomes.length} income(s).`,
+        t("data.imported", {
+          expenses: parsedExpenses.length,
+          incomes: parsedIncomes.length,
+        }),
       ];
-      if (errors.length) parts.push(`${errors.length} row(s) skipped.`);
+      if (errors.length) parts.push(t("data.skipped", { n: errors.length }));
+      // Surface the first specific problem so a fully-rejected import isn't opaque.
+      if (parsedExpenses.length === 0 && parsedIncomes.length === 0 && errors.length)
+        parts.push(importErrorText(errors[0], t));
       setMessage(parts.join(" "));
     };
     reader.readAsText(file);
@@ -112,16 +139,12 @@ export function DataControls({
     reader.onload = () => {
       const { data, error } = parseBackup(String(reader.result));
       if (!data) {
-        setMessage(error ?? "Could not read that backup file.");
+        setMessage(error ? t(`backup.error.${error}`) : t("backup.error.readFail"));
         return;
       }
-      if (
-        window.confirm(
-          "Restoring this backup will replace all current transactions, categories, budgets, reports and settings. Continue?"
-        )
-      ) {
+      if (window.confirm(t("data.restoreConfirm"))) {
         onRestoreAll(data);
-        setMessage("Backup restored.");
+        setMessage(t("data.restored"));
       }
     };
     reader.readAsText(file);
@@ -129,13 +152,9 @@ export function DataControls({
   }
 
   function handleClear() {
-    if (
-      window.confirm(
-        "Delete all transactions, budgets and reports, and reset categories? This can't be undone."
-      )
-    ) {
+    if (window.confirm(t("data.clearConfirm"))) {
       onClearAll();
-      setMessage("All data cleared.");
+      setMessage(t("data.cleared"));
     }
   }
 
@@ -145,19 +164,19 @@ export function DataControls({
     <div className={styles.wrap}>
       <div className={styles.buttons}>
         <button className="btn" onClick={handleExport} disabled={isEmpty}>
-          ⬇ Export CSV
+          {t("data.exportCsv")}
         </button>
         <button className="btn" onClick={() => fileRef.current?.click()}>
-          ⬆ Import CSV
+          {t("data.importCsv")}
         </button>
         <button className="btn" onClick={handleBackupExport} disabled={isEmpty}>
-          ⬇ Export backup (JSON)
+          {t("data.exportBackup")}
         </button>
         <button className="btn" onClick={() => backupFileRef.current?.click()}>
-          ⬆ Restore backup
+          {t("data.restoreBackup")}
         </button>
         <button className="btn btn-danger" onClick={handleClear}>
-          Clear all
+          {t("data.clearAll")}
         </button>
         <input
           ref={fileRef}
@@ -176,10 +195,7 @@ export function DataControls({
       </div>
       {message && <p className={styles.message}>{message}</p>}
       <p className="muted" style={{ fontSize: "0.78rem" }}>
-        CSV columns: date (YYYY-MM-DD), type (expense/income), amount, currency,
-        category, note. Files without a type column import as expenses. The JSON
-        backup captures everything — including categories, budgets, reports and
-        settings — and a restore replaces all current data.
+        {t("data.help")}
       </p>
     </div>
   );

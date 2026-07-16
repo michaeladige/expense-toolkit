@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import type { Category, RateMap, TaggedEntry } from "../types";
 import { EntryItem } from "./EntryItem";
 import { FILTERS, byRecency, matchesQuery, type Filter } from "../lib/entryFilters";
+import { useI18n } from "../lib/i18n/I18nContext";
+import { displayCategoryName } from "../lib/i18n/categoryName";
 import styles from "./AllEntriesPanel.module.css";
 
 interface Props {
@@ -33,6 +35,7 @@ export function AllEntriesPanel({
   onDuplicate,
   onClose,
 }: Props) {
+  const { t, lang } = useI18n();
   const [filter, setFilter] = useState<Filter>("all");
   const [categoryId, setCategoryId] = useState<string>("all");
   const [query, setQuery] = useState("");
@@ -66,7 +69,7 @@ export function AllEntriesPanel({
     .filter((e) => filter === "all" || e.kind === filter)
     .filter((e) => categoryId === "all" || e.categoryId === categoryId)
     .filter((e) => (!from || e.date >= from) && (!to || e.date <= to))
-    .filter((e) => matchesQuery(e, resolve(e)?.name ?? "", query));
+    .filter((e) => matchesQuery(e, displayCategoryName(resolve(e), lang), query));
   const sorted = [...visible].sort(byRecency);
 
   // Reset a category selection that the new kind filter no longer offers.
@@ -81,17 +84,17 @@ export function AllEntriesPanel({
       <aside
         className={styles.drawer}
         role="dialog"
-        aria-label="All transactions"
+        aria-label={t("allEntries.title")}
         aria-modal="true"
       >
         <header className={styles.header}>
           <div>
-            <h2 className={styles.heading}>All transactions</h2>
+            <h2 className={styles.heading}>{t("allEntries.title")}</h2>
             <span className={styles.subheading}>{periodLabel}</span>
           </div>
           <button
             className="btn btn-ghost btn-icon"
-            aria-label="Close all transactions"
+            aria-label={t("allEntries.close")}
             onClick={onClose}
           >
             ✕
@@ -102,7 +105,7 @@ export function AllEntriesPanel({
           <div
             className={styles.filters}
             role="group"
-            aria-label="Filter by type"
+            aria-label={t("allEntries.filterType")}
           >
             {FILTERS.map((f) => (
               <button
@@ -112,7 +115,7 @@ export function AllEntriesPanel({
                 aria-pressed={filter === f.id}
                 onClick={() => onFilterChange(f.id)}
               >
-                {f.label}
+                {t(`filter.${f.id}`)}
               </button>
             ))}
           </div>
@@ -120,30 +123,30 @@ export function AllEntriesPanel({
           <input
             className="input"
             type="search"
-            placeholder="Search note, category or date…"
+            placeholder={t("allEntries.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search transactions"
+            aria-label={t("allEntries.searchAria")}
           />
 
           <select
             className="select"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            aria-label="Filter by category"
+            aria-label={t("allEntries.filterCategoryAria")}
           >
-            <option value="all">All categories</option>
+            <option value="all">{t("allEntries.allCategories")}</option>
             {categoryOptions.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.icon ? `${c.icon} ` : ""}
-                {c.name}
+                {displayCategoryName(c, lang)}
               </option>
             ))}
           </select>
 
           <div className={styles.dateRow}>
             <label className={styles.dateField}>
-              <span>From</span>
+              <span>{t("allEntries.from")}</span>
               <input
                 className="input"
                 type="date"
@@ -154,7 +157,7 @@ export function AllEntriesPanel({
               />
             </label>
             <label className={styles.dateField}>
-              <span>To</span>
+              <span>{t("allEntries.to")}</span>
               <input
                 className="input"
                 type="date"
@@ -168,7 +171,7 @@ export function AllEntriesPanel({
               <button
                 type="button"
                 className={`btn btn-ghost btn-icon ${styles.dateClear}`}
-                aria-label="Clear date range"
+                aria-label={t("allEntries.clearDates")}
                 onClick={() => {
                   setFrom("");
                   setTo("");
@@ -181,11 +184,11 @@ export function AllEntriesPanel({
         </div>
 
         <span className={styles.count}>
-          {sorted.length} {sorted.length === 1 ? "transaction" : "transactions"}
+          {t("allEntries.count", { n: sorted.length })}
         </span>
 
         {sorted.length === 0 ? (
-          <p className="empty">No transactions match these filters.</p>
+          <p className="empty">{t("allEntries.empty")}</p>
         ) : (
           <ul className={styles.list}>
             {sorted.map((e) => (

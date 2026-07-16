@@ -9,6 +9,9 @@ import {
   resolveMode,
   swatchFor,
 } from "../lib/theme";
+import { useI18n } from "../lib/i18n/I18nContext";
+import { LANGUAGES } from "../lib/i18n";
+import type { Language } from "../lib/i18n/types";
 import styles from "./AppearancePanel.module.css";
 
 interface Props {
@@ -17,18 +20,36 @@ interface Props {
 }
 
 export function AppearancePanel({ settings, onUpdateSettings }: Props) {
+  const { t } = useI18n();
   const mode = settings.mode ?? DEFAULT_MODE;
   const themeColor = settings.themeColor ?? DEFAULT_COLOR;
   const pattern = settings.pattern ?? DEFAULT_PATTERN;
+  const language = settings.language ?? "en";
   // Swatches show the shade that's actually live, so a dark accent never sits
   // on a dark background looking muddy.
   const resolved = resolveMode(mode);
 
   return (
     <div className={styles.wrap}>
+      <div className="field">
+        <label htmlFor="app-language">{t("appearance.language")}</label>
+        <select
+          id="app-language"
+          className="select"
+          value={language}
+          onChange={(e) => onUpdateSettings({ language: e.target.value as Language })}
+        >
+          {LANGUAGES.map((l) => (
+            <option key={l.code} value={l.code}>
+              {l.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className={styles.axis}>
         <span className={styles.axisLabel} id="theme-mode-label">
-          Mode
+          {t("appearance.mode")}
         </span>
         <div
           className={styles.segmented}
@@ -43,7 +64,7 @@ export function AppearancePanel({ settings, onUpdateSettings }: Props) {
               aria-pressed={mode === m.id}
               onClick={() => onUpdateSettings({ mode: m.id })}
             >
-              {m.label}
+              {t(`theme.mode.${m.id}`)}
             </button>
           ))}
         </div>
@@ -51,7 +72,7 @@ export function AppearancePanel({ settings, onUpdateSettings }: Props) {
 
       <div className={styles.axis}>
         <span className={styles.axisLabel} id="theme-color-label">
-          Color
+          {t("appearance.color")}
         </span>
         <div
           className={styles.swatches}
@@ -75,7 +96,7 @@ export function AppearancePanel({ settings, onUpdateSettings }: Props) {
 
       <div className={styles.axis}>
         <span className={styles.axisLabel} id="theme-pattern-label">
-          Pattern
+          {t("appearance.pattern")}
         </span>
         <div
           className={styles.patterns}
@@ -93,7 +114,7 @@ export function AppearancePanel({ settings, onUpdateSettings }: Props) {
               {/* Inert preview tile: the same gradients index.css uses, scoped
                   to this swatch via data-preview. */}
               <span className={styles.patternSwatch} data-preview={p.id} aria-hidden />
-              {p.label}
+              {t(`theme.pattern.${p.id}`)}
             </button>
           ))}
         </div>

@@ -1,5 +1,6 @@
 import type { Report, ReportCategoryTotal } from "../types";
 import { formatMoney } from "../lib/currency";
+import { useI18n } from "../lib/i18n/I18nContext";
 import styles from "./ReportsPanel.module.css";
 
 interface Props {
@@ -41,6 +42,7 @@ function TopCategories({
 }
 
 export function ReportsPanel({ reports, onClose }: Props) {
+  const { t } = useI18n();
   // Newest first. periodKey sorts chronologically within a period type, but
   // weeks and months interleave, so order by the date the period ended. A month
   // ending on a Sunday ties with that week, so break ties with the longer period
@@ -57,14 +59,14 @@ export function ReportsPanel({ reports, onClose }: Props) {
       <aside
         className={styles.drawer}
         role="dialog"
-        aria-label="Reports"
+        aria-label={t("reports.title")}
         aria-modal="true"
       >
         <header className={styles.header}>
-          <h2 className={styles.heading}>Reports</h2>
+          <h2 className={styles.heading}>{t("reports.title")}</h2>
           <button
             className="btn btn-ghost btn-icon"
-            aria-label="Close reports"
+            aria-label={t("reports.closeAria")}
             onClick={onClose}
           >
             ✕
@@ -72,10 +74,7 @@ export function ReportsPanel({ reports, onClose }: Props) {
         </header>
 
         {sorted.length === 0 ? (
-          <p className="empty">
-            No reports yet. One is written automatically for each week and month
-            that finishes while you're using the app.
-          </p>
+          <p className="empty">{t("reports.empty")}</p>
         ) : (
           <ul className={styles.list}>
             {sorted.map((r) => {
@@ -84,7 +83,7 @@ export function ReportsPanel({ reports, onClose }: Props) {
                 <li key={r.id} className={styles.report}>
                   <div className={styles.reportHeader}>
                     <span className={styles.periodTag}>
-                      {r.period === "week" ? "Week" : "Month"}
+                      {r.period === "week" ? t("reports.week") : t("reports.month")}
                     </span>
                     <span className={styles.label}>{r.label}</span>
                   </div>
@@ -100,7 +99,7 @@ export function ReportsPanel({ reports, onClose }: Props) {
                     {change != null && (
                       <span
                         className={`${styles.change} ${change >= 0 ? styles.positive : styles.negative}`}
-                        title="Change in net vs the previous period"
+                        title={t("reports.changeTitle")}
                       >
                         {change >= 0 ? "▲" : "▼"} {Math.abs(change).toFixed(0)}%
                       </span>
@@ -109,10 +108,10 @@ export function ReportsPanel({ reports, onClose }: Props) {
 
                   <div className={styles.flows}>
                     <span className={styles.positive}>
-                      {formatMoney(r.incomeTotal, r.baseCurrency)} in
+                      {t("reports.in", { amount: formatMoney(r.incomeTotal, r.baseCurrency) })}
                     </span>
                     <span className="muted">
-                      {formatMoney(r.expenseTotal, r.baseCurrency)} out
+                      {t("reports.out", { amount: formatMoney(r.expenseTotal, r.baseCurrency) })}
                     </span>
                   </div>
 

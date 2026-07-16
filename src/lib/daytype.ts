@@ -1,5 +1,6 @@
 import type { Expense, RateMap } from "../types";
 import type { WorkCalendar } from "./workdays";
+import type { DayTypePhrases } from "./i18n/types";
 import { convert } from "./currency";
 import { fromISODate, toISODate } from "./dates";
 
@@ -127,11 +128,6 @@ export function hasActivity(b: DayTypeBreakdown): boolean {
   return b.grandTotal > 0;
 }
 
-const TYPE_NOUN: Record<DayType, string> = {
-  workday: "workdays",
-  dayoff: "days off",
-};
-
 /** The day type with the highest per-day average, among those with activity. */
 function topByAverage(b: DayTypeBreakdown): DayTypeStat | null {
   const active = DAY_TYPES.map((t) => b.stats[t]).filter((s) => s.activeDays > 0);
@@ -149,84 +145,60 @@ function runnerUp(b: DayTypeBreakdown, top: DayTypeStat): DayTypeStat | null {
 }
 
 /**
- * Stable index into a template list from the rounded stats, so the chosen line
+ * Stable index into a variant list from the rounded stats, so the chosen line
  * doesn't flicker between renders (the breakdown object is recomputed each
  * render, but its rounded numbers are stable).
  */
-function pick(options: string[], seed: number): string {
+function pick<T>(options: readonly T[], seed: number): T {
   const i = Math.abs(Math.round(seed)) % options.length;
   return options[i];
 }
 
-const SINGLE_TYPE_VERDICTS: Record<DayType, string[]> = {
-  workday: [
-    "Every dollar lands on a workday. Your idea of a wild weekend is closing all the browser tabs.",
-    "100% workday spending. Saturdays and Sundays cost you literally nothing — deeply suspicious.",
-  ],
-  dayoff: [
-    "All your spending happens on days off. Work is just where you recover from your wallet.",
-    "Every expense is a day-off expense. Monday to Friday your card is basically in a coma.",
-  ],
-};
-
 /**
  * A one-line, tongue-in-cheek read of the spending shape. Deterministic: no
- * randomness, no network.
+ * randomness, no network. Copy comes from the active language's `phrases`
+ * bank, so the humour follows the UI language.
  */
-export function verdictLine(b: DayTypeBreakdown): string {
+export function verdictLine(b: DayTypeBreakdown, phrases: DayTypePhrases): string {
   const top = topByAverage(b);
   if (!top) return "";
   const seed = Math.round(b.grandTotal);
   const other = runnerUp(b, top);
-  if (!other) return pick(SINGLE_TYPE_VERDICTS[top.type], seed);
+  if (!other) return pick(phrases.single[top.type], seed);
 
   const ratio = other.average > 0 ? top.average / other.average : Infinity;
-  const topNoun = TYPE_NOUN[top.type];
-  const otherNoun = TYPE_NOUN[other.type];
+  const topNoun = phrases.noun[top.type];
+  const otherNoun = phrases.noun[other.type];
 
   if (ratio < 1.15) {
-    return pick(
-      [
-        `Workdays and days off cost you almost exactly the same — your wallet genuinely cannot read a calendar.`,
-        `Neck and neck. Working or free, the money escapes at the same heroic speed.`,
-      ],
-      seed
-    );
+    return pick(phrases.even, seed);
   }
   if (ratio >= 2 && Number.isFinite(ratio)) {
-    return pick(
-      [
-        `On ${topNoun} your day-rate is ${ratio.toFixed(1)}× your ${otherNoun}. The other days are just savings in a trench coat.`,
-        `${cap(topNoun)} cost ${ratio.toFixed(1)}× what ${otherNoun} do. That's not a spending pattern, that's a whole personality.`,
-      ],
-      seed
-    );
+    return pick(phrases.dominant, seed)({
+      top: cap(topNoun),
+      other: otherNoun,
+      ratio: ratio.toFixed(1),
+    });
   }
-  return pick(
-    [
-      `${cap(topNoun)} edge out ${otherNoun} as your pricier day type. The calendar has learned your weaknesses.`,
-      `You lean toward spending on ${topNoun}. Bold of you to have a favorite kind of day to hemorrhage money.`,
-    ],
-    seed
-  );
+  return pick(phrases.lean, seed)({ top: cap(topNoun), other: otherNoun });
 }
 
 /**
  * One genuinely useful nudge, keyed off the same signal as the verdict.
  */
-export function adviceLine(b: DayTypeBreakdown): string {
+export function adviceLine(b: DayTypeBreakdown, phrases: DayTypePhrases): string {
   const top = topByAverage(b);
   if (!top) return "";
   const other = runnerUp(b, top);
-  if (!other) {
-    return "Log a few more days and this becomes a real workday-vs-days-off showdown.";
-  }
+  if (!other) return phrases.adviceSingle;
   const ratio = other.average > 0 ? top.average / other.average : Infinity;
-  const topNoun = TYPE_NOUN[top.type];
   if (ratio >= 1.5 && Number.isFinite(ratio)) {
-    return `Your ${topNoun} day-rate runs ${ratio.toFixed(1)}× the rest — naming one "fun budget" number up front tends to tame those days.`;
+    return phrases.adviceDominant({
+      top: phrases.noun[top.type],
+      ratio: ratio.toFixed(1),
+    });
   }
-  return "Your workdays and days off are fairly balanced — one overall monthly budget will serve you better than watching the calendar.";
+  return phrases.adviceBalanced;
 }
 
 /**
@@ -236,24 +208,17 @@ export function adviceLine(b: DayTypeBreakdown): string {
  */
 export function categoryQuip(
   b: DayTypeBreakdown,
-  nameOf: (id: string) => string
+  nameOf: (id: string) => string,
+  phrases: DayTypePhrases
 ): string {
   const seed = Math.round(b.grandTotal);
   const topOff = maxByType(b, "dayoff");
   if (topOff && topOff.byType.dayoff > 0) {
-    const name = nameOf(topOff.categoryId);
-    return pick(
-      [
-        `${name} is your signature day-off splurge. No notes.`,
-        `On your days off, ${name} does the most damage — and it knows it.`,
-      ],
-      seed
-    );
+    return pick(phrases.quipDayoff, seed)({ name: nameOf(topOff.categoryId) });
   }
   const topWork = maxByType(b, "workday");
   if (topWork && topWork.byType.workday > 0) {
-    const name = nameOf(topWork.categoryId);
-    return `${name} is where your workdays quietly leak money.`;
+    return phrases.quipWorkday({ name: nameOf(topWork.categoryId) });
   }
   return "";
 }

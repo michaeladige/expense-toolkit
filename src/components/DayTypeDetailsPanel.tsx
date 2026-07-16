@@ -3,14 +3,16 @@ import type { Category } from "../types";
 import type { DayTypeBreakdown } from "../lib/daytype";
 import { DAY_TYPES, adviceLine, categoryQuip, verdictLine } from "../lib/daytype";
 import { formatMoney } from "../lib/currency";
+import { useI18n } from "../lib/i18n/I18nContext";
+import { categoryNameOf, displayCategoryName } from "../lib/i18n/categoryName";
 import { DAY_TYPE_COLOR, DAY_TYPE_LABEL } from "./DayTypeAnalytics";
 import styles from "./DayTypeDetailsPanel.module.css";
 
 type View = "category" | "daytype";
 
-const VIEWS: { id: View; label: string }[] = [
-  { id: "category", label: "By category" },
-  { id: "daytype", label: "By day type" },
+const VIEWS: { id: View; labelKey: string }[] = [
+  { id: "category", labelKey: "view.byCategory" },
+  { id: "daytype", labelKey: "view.byDayType" },
 ];
 
 /** How many categories each day-type section lists before stopping. */
@@ -29,9 +31,10 @@ export function DayTypeDetailsPanel({
   categoryById,
   onClose,
 }: Props) {
+  const { t, lang, daytype } = useI18n();
   const [view, setView] = useState<View>("category");
   const { stats, categories, approximate } = breakdown;
-  const nameOf = (id: string) => categoryById(id)?.name ?? "Uncategorized";
+  const nameOf = (id: string) => categoryNameOf(id, categoryById, lang);
 
   return (
     <>
@@ -39,17 +42,17 @@ export function DayTypeDetailsPanel({
       <aside
         className={styles.drawer}
         role="dialog"
-        aria-label="Spending by day type"
+        aria-label={t("dayType.title")}
         aria-modal="true"
       >
         <header className={styles.header}>
           <div>
-            <h2 className={styles.heading}>When you spend</h2>
-            <span className={styles.subheading}>All-time breakdown</span>
+            <h2 className={styles.heading}>{t("dayType.title")}</h2>
+            <span className={styles.subheading}>{t("dayType.detailsSubtitle")}</span>
           </div>
           <button
             className="btn btn-ghost btn-icon"
-            aria-label="Close breakdown"
+            aria-label={t("dayType.closeAria")}
             onClick={onClose}
           >
             ✕
@@ -67,10 +70,10 @@ export function DayTypeDetailsPanel({
                     className={styles.swatch}
                     style={{ background: DAY_TYPE_COLOR[type] }}
                   />
-                  {DAY_TYPE_LABEL[type]}
+                  {t(DAY_TYPE_LABEL[type])}
                   {type === "dayoff" && approximate && (
-                    <span className={styles.approx} title="Some expenses fall outside the years we have holiday data for">
-                      ~approx
+                    <span className={styles.approx} title={t("dayType.approxTitleShort")}>
+                      {t("dayType.approx")}
                     </span>
                   )}
                 </span>
@@ -83,7 +86,7 @@ export function DayTypeDetailsPanel({
           })}
         </ul>
 
-        <div className={styles.toggle} role="group" aria-label="Breakdown view">
+        <div className={styles.toggle} role="group" aria-label={t("dayType.viewAria")}>
           {VIEWS.map((v) => (
             <button
               key={v.id}
@@ -92,13 +95,13 @@ export function DayTypeDetailsPanel({
               aria-pressed={view === v.id}
               onClick={() => setView(v.id)}
             >
-              {v.label}
+              {t(v.labelKey)}
             </button>
           ))}
         </div>
 
         {categories.length === 0 ? (
-          <p className={styles.empty}>No spending recorded yet.</p>
+          <p className={styles.empty}>{t("dayType.emptyRecorded")}</p>
         ) : view === "category" ? (
           <ByCategory
             categories={categories}
@@ -113,9 +116,9 @@ export function DayTypeDetailsPanel({
           />
         )}
 
-        <p className={styles.verdict}>{verdictLine(breakdown)}</p>
-        <p className={styles.advice}>💡 {adviceLine(breakdown)}</p>
-        <p className={styles.quip}>🎲 {categoryQuip(breakdown, nameOf)}</p>
+        <p className={styles.verdict}>{verdictLine(breakdown, daytype)}</p>
+        <p className={styles.advice}>💡 {adviceLine(breakdown, daytype)}</p>
+        <p className={styles.quip}>🎲 {categoryQuip(breakdown, nameOf, daytype)}</p>
       </aside>
     </>
   );
@@ -130,6 +133,7 @@ function ByCategory({
   baseCurrency: string;
   categoryById: (id: string) => Category | undefined;
 }) {
+  const { t, lang } = useI18n();
   return (
     <ul className={styles.list}>
       {categories.map((c) => {
@@ -143,7 +147,7 @@ function ByCategory({
                 <span className={styles.catIcon} aria-hidden>
                   {cat?.icon ?? "•"}
                 </span>
-                {cat?.name ?? "Uncategorized"}
+                {displayCategoryName(cat, lang)}
               </span>
               <span className={styles.catTotal}>
                 {formatMoney(c.total, baseCurrency)}
@@ -160,8 +164,8 @@ function ByCategory({
               />
             </div>
             <div className={styles.catMeta}>
-              <span>Work {formatMoney(c.byType.workday, baseCurrency)}</span>
-              <span>Off {formatMoney(c.byType.dayoff, baseCurrency)}</span>
+              <span>{t("dayType.work", { money: formatMoney(c.byType.workday, baseCurrency) })}</span>
+              <span>{t("dayType.off", { money: formatMoney(c.byType.dayoff, baseCurrency) })}</span>
             </div>
           </li>
         );
@@ -179,6 +183,7 @@ function ByDayType({
   baseCurrency: string;
   categoryById: (id: string) => Category | undefined;
 }) {
+  const { t, lang } = useI18n();
   return (
     <div className={styles.sections}>
       {DAY_TYPES.map((type) => {
@@ -196,14 +201,14 @@ function ByDayType({
                   className={styles.swatch}
                   style={{ background: DAY_TYPE_COLOR[type] }}
                 />
-                {DAY_TYPE_LABEL[type]}
+                {t(DAY_TYPE_LABEL[type])}
               </span>
               <span className={styles.sectionTotal}>
                 {formatMoney(typeTotal, baseCurrency)}
               </span>
             </div>
             {ranked.length === 0 ? (
-              <p className={styles.sectionEmpty}>Nothing here yet.</p>
+              <p className={styles.sectionEmpty}>{t("dayType.nothingHere")}</p>
             ) : (
               <ul className={styles.list}>
                 {ranked.map((c) => {
@@ -216,7 +221,7 @@ function ByDayType({
                           <span className={styles.catIcon} aria-hidden>
                             {cat?.icon ?? "•"}
                           </span>
-                          {cat?.name ?? "Uncategorized"}
+                          {displayCategoryName(cat, lang)}
                         </span>
                         <span className={styles.catTotal}>
                           {formatMoney(c.amount, baseCurrency)}
