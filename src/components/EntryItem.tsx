@@ -43,51 +43,56 @@ export function EntryItem({
 
       <div className={styles.main}>
         <span className={styles.title}>{category?.name ?? "Uncategorized"}</span>
-        <span className={styles.sub}>
-          {fromISODate(entry.date).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-          })}
-          {entry.note ? ` · ${entry.note}` : ""}
-        </span>
-      </div>
 
-      <div className={styles.amount}>
-        <span
-          className={`${styles.primaryAmount} ${isIncome ? styles.incomeAmount : ""}`}
-        >
-          {isIncome ? "+" : "−"}
-          {formatMoney(entry.amount, entry.currency)}
-        </span>
-        {converted != null && (
-          <span className={styles.convertedAmount}>
-            ≈ {formatMoney(converted, baseCurrency)}
+        <div className={styles.bottomRow}>
+          <span className={styles.sub}>
+            {fromISODate(entry.date).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+            })}
+            {entry.note ? ` · ${entry.note}` : ""}
           </span>
-        )}
-      </div>
 
-      <div className={styles.rowActions}>
-        <button
-          className="btn btn-ghost btn-icon"
-          aria-label={`Duplicate ${noun}`}
-          onClick={() => onDuplicate(entry)}
-        >
-          ⧉
-        </button>
-        <button
-          className="btn btn-ghost btn-icon"
-          aria-label={`Edit ${noun}`}
-          onClick={() => onEdit(entry)}
-        >
-          ✎
-        </button>
-        <button
-          className="btn btn-ghost btn-icon btn-danger"
-          aria-label={`Delete ${noun}`}
-          onClick={() => onDelete(entry)}
-        >
-          ✕
-        </button>
+          <div className={styles.amountActions}>
+            <div className={styles.amount}>
+              <span
+                className={`${styles.primaryAmount} ${isIncome ? styles.incomeAmount : ""}`}
+              >
+                {isIncome ? "+" : "−"}
+                {formatMoney(entry.amount, entry.currency)}
+              </span>
+              {converted != null && (
+                <span className={styles.convertedAmount}>
+                  ≈ {formatMoney(converted, baseCurrency)}
+                </span>
+              )}
+            </div>
+
+            <div className={styles.rowActions}>
+              <button
+                className="btn btn-ghost btn-icon"
+                aria-label={`Duplicate ${noun}`}
+                onClick={() => onDuplicate(entry)}
+              >
+                ⧉
+              </button>
+              <button
+                className="btn btn-ghost btn-icon"
+                aria-label={`Edit ${noun}`}
+                onClick={() => onEdit(entry)}
+              >
+                ✎
+              </button>
+              <button
+                className="btn btn-ghost btn-icon btn-danger"
+                aria-label={`Delete ${noun}`}
+                onClick={() => onDelete(entry)}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </li>
   );
