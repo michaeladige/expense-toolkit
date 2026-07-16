@@ -70,21 +70,21 @@ export function EntryItem({
 
             <div className={styles.rowActions}>
               <button
-                className="btn btn-ghost btn-icon"
+                className={`btn btn-ghost btn-icon ${styles.actionBtn}`}
                 aria-label={`Duplicate ${noun}`}
                 onClick={() => onDuplicate(entry)}
               >
                 ⧉
               </button>
               <button
-                className="btn btn-ghost btn-icon"
+                className={`btn btn-ghost btn-icon ${styles.actionBtn}`}
                 aria-label={`Edit ${noun}`}
                 onClick={() => onEdit(entry)}
               >
                 ✎
               </button>
               <button
-                className="btn btn-ghost btn-icon btn-danger"
+                className={`btn btn-ghost btn-icon btn-danger ${styles.actionBtn}`}
                 aria-label={`Delete ${noun}`}
                 onClick={() => onDelete(entry)}
               >
