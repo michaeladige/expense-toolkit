@@ -1,7 +1,9 @@
 import { useRegisterSW } from "virtual:pwa-register/react";
+import { useI18n } from "../lib/i18n/I18nContext";
 import styles from "./UpdatePrompt.module.css";
 
 export function UpdatePrompt() {
+  const { t } = useI18n();
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     offlineReady: [offlineReady, setOfflineReady],
@@ -22,9 +24,7 @@ export function UpdatePrompt() {
   return (
     <div className={`card ${styles.toast}`} role="status">
       <span className={styles.message}>
-        {needRefresh
-          ? "A new version of Expense Toolkit is available."
-          : "Expense Toolkit is ready to work offline."}
+        {needRefresh ? t("update.available") : t("update.offlineReady")}
       </span>
       <div className={styles.actions}>
         {needRefresh && (
@@ -32,11 +32,11 @@ export function UpdatePrompt() {
             className="btn btn-primary"
             onClick={() => updateServiceWorker(true)}
           >
-            Reload
+            {t("update.reload")}
           </button>
         )}
         <button className="btn btn-ghost" onClick={close}>
-          Dismiss
+          {t("toast.dismiss")}
         </button>
       </div>
     </div>

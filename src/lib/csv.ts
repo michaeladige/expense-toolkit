@@ -77,10 +77,20 @@ function parseLine(line: string): string[] {
   return out;
 }
 
+/** Import failures as structured codes, translated at the UI boundary so the
+ *  message follows the active language rather than being frozen in English. */
+export type ImportError =
+  | { code: "empty" }
+  | { code: "missingColumns" }
+  | { code: "invalidDate"; row: number; value: string }
+  | { code: "invalidAmount"; row: number }
+  | { code: "missingCurrency"; row: number }
+  | { code: "unknownType"; row: number; value: string };
+
 export interface ParsedImport {
   expenses: Omit<Expense, "id" | "createdAt">[];
   incomes: Omit<Income, "id" | "createdAt">[];
-  errors: string[];
+  errors: ImportError[];
 }
 
 /**
@@ -100,10 +110,11 @@ export function csvToEntries(
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
-  const errors: string[] = [];
+  const errors: ImportError[] = [];
   const expenses: Omit<Expense, "id" | "createdAt">[] = [];
   const incomes: Omit<Income, "id" | "createdAt">[] = [];
-  if (lines.length === 0) return { expenses, incomes, errors: ["File is empty."] };
+  if (lines.length === 0)
+    return { expenses, incomes, errors: [{ code: "empty" }] };
 
   const header = parseLine(lines[0]).map((h) => h.trim().toLowerCase());
   const idx = (name: string) => header.indexOf(name);
@@ -114,11 +125,7 @@ export function csvToEntries(
   const iCategory = idx("category");
   const iNote = idx("note");
   if (iDate < 0 || iAmount < 0 || iCurrency < 0) {
-    return {
-      expenses,
-      incomes,
-      errors: ['Missing required columns: "date", "amount", "currency".'],
-    };
+    return { expenses, incomes, errors: [{ code: "missingColumns" }] };
   }
 
   const byName = new Map(categories.map((c) => [c.name.toLowerCase(), c.id]));
@@ -132,21 +139,21 @@ export function csvToEntries(
     const amount = parseFloat((cells[iAmount] ?? "").trim());
     const currency = (cells[iCurrency] ?? "").trim().toUpperCase();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      errors.push(`Row ${i + 1}: invalid date "${date}".`);
+      errors.push({ code: "invalidDate", row: i + 1, value: date });
       continue;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      errors.push(`Row ${i + 1}: invalid amount.`);
+      errors.push({ code: "invalidAmount", row: i + 1 });
       continue;
     }
     if (!currency) {
-      errors.push(`Row ${i + 1}: missing currency.`);
+      errors.push({ code: "missingCurrency", row: i + 1 });
       continue;
     }
 
     const rawType = (iType >= 0 ? cells[iType] ?? "" : "").trim().toLowerCase();
     if (iType >= 0 && rawType && rawType !== "expense" && rawType !== "income") {
-      errors.push(`Row ${i + 1}: unknown type "${rawType}".`);
+      errors.push({ code: "unknownType", row: i + 1, value: rawType });
       continue;
     }
     const isIncome = rawType === "income";

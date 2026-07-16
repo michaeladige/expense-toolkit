@@ -17,6 +17,9 @@ import {
   toISODate,
 } from "./dates";
 import { netInBase, sumByCategoryInBase } from "./summary";
+import type { Language } from "./i18n/types";
+import { displayCategoryName } from "./i18n/categoryName";
+import { LOCALES, translate } from "./i18n/translate";
 
 /**
  * Most periods generated in a single pass. Without a cap, a first run over
@@ -69,12 +72,14 @@ export function pendingReportPeriods(
 
 type CategoryLookup = (id: string) => Category | undefined;
 
-/** Resolve per-category totals into a frozen, display-ready, descending list. */
+/** Resolve per-category totals into a frozen, display-ready, descending list.
+ *  Names are frozen in the language active at generation time. */
 function freezeCategories(
   entries: Entry[],
   base: string,
   rates: RateMap,
-  lookup: CategoryLookup
+  lookup: CategoryLookup,
+  lang: Language
 ): ReportCategoryTotal[] {
   const totals = sumByCategoryInBase(entries, base, rates);
   return Object.entries(totals)
@@ -82,7 +87,9 @@ function freezeCategories(
       const cat = lookup(categoryId);
       return {
         categoryId,
-        name: cat?.name ?? "Uncategorized",
+        name: cat
+          ? displayCategoryName(cat, lang)
+          : translate(lang, "common.uncategorized"),
         color: cat?.color ?? "#64748b",
         amount,
       };
@@ -100,6 +107,8 @@ export interface BuildReportArgs {
   baseCurrency: string;
   rates: RateMap;
   prevNet: number | null;
+  /** UI language at generation; the label and category names are frozen in it. */
+  lang: Language;
 }
 
 /**
@@ -119,6 +128,7 @@ export function buildReport({
   baseCurrency,
   rates,
   prevNet,
+  lang,
 }: BuildReportArgs): Report | null {
   const periodExpenses = entriesInRange(expenses, ref, period);
   const periodIncomes = entriesInRange(incomes, ref, period);
@@ -134,7 +144,7 @@ export function buildReport({
     periodKey: key,
     startDate: toISODate(range.start),
     endDate: toISODate(range.end),
-    label: formatPeriodLabel(period, ref),
+    label: formatPeriodLabel(period, ref, LOCALES[lang]),
     baseCurrency,
     incomeTotal: totals.income,
     expenseTotal: totals.expense,
@@ -143,13 +153,15 @@ export function buildReport({
       periodIncomes,
       baseCurrency,
       rates,
-      incomeCategoryById
+      incomeCategoryById,
+      lang
     ),
     expenseByCategory: freezeCategories(
       periodExpenses,
       baseCurrency,
       rates,
-      categoryById
+      categoryById,
+      lang
     ),
     prevNet,
     approximate: totals.missing,

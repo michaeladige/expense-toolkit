@@ -4,6 +4,8 @@ export interface GradeResult {
   grade: Grade;
   /** Unrounded; what it's a ratio *of* depends on the grader that produced it. */
   ratio: number;
+  /** i18n key for the tier's flavour text, e.g. "grade.spending.S". Translated
+   *  at the component boundary so the label follows the active language. */
   label: string;
   /** CSS custom-property reference, e.g. "var(--success)". */
   color: string;
@@ -18,12 +20,12 @@ interface Tier {
 }
 
 const TIERS: Tier[] = [
-  { grade: "S", max: 0.7, label: "Certified tightwad. We're impressed.", color: "var(--success)" },
-  { grade: "A", max: 0.85, label: "Basically a budgeting wizard.", color: "var(--success)" },
-  { grade: "B", max: 1.0, label: "Solid. Your wallet approves.", color: "var(--warning)" },
-  { grade: "C", max: 1.1, label: "A bit spicy, but survivable.", color: "var(--warning)" },
-  { grade: "D", max: 1.3, label: "Your wallet is filing a complaint.", color: "var(--danger)" },
-  { grade: "F", max: Infinity, label: "RIP wallet. Send flowers.", color: "var(--danger)" },
+  { grade: "S", max: 0.7, label: "grade.spending.S", color: "var(--success)" },
+  { grade: "A", max: 0.85, label: "grade.spending.A", color: "var(--success)" },
+  { grade: "B", max: 1.0, label: "grade.spending.B", color: "var(--warning)" },
+  { grade: "C", max: 1.1, label: "grade.spending.C", color: "var(--warning)" },
+  { grade: "D", max: 1.3, label: "grade.spending.D", color: "var(--danger)" },
+  { grade: "F", max: Infinity, label: "grade.spending.F", color: "var(--danger)" },
 ];
 
 /**
@@ -52,12 +54,12 @@ interface SavingsTier {
  * A negative rate means the month spent more than it earned.
  */
 const SAVINGS_TIERS: SavingsTier[] = [
-  { grade: "S", min: 0.3, label: "Hoarding like a dragon. Respect.", color: "var(--success)" },
-  { grade: "A", min: 0.2, label: "Saving like you mean it.", color: "var(--success)" },
-  { grade: "B", min: 0.1, label: "A tidy little cushion.", color: "var(--warning)" },
-  { grade: "C", min: 0, label: "Breaking even. Just barely.", color: "var(--warning)" },
-  { grade: "D", min: -0.1, label: "Spending more than you earn.", color: "var(--danger)" },
-  { grade: "F", min: -Infinity, label: "Torching the savings. Please stop.", color: "var(--danger)" },
+  { grade: "S", min: 0.3, label: "grade.savings.S", color: "var(--success)" },
+  { grade: "A", min: 0.2, label: "grade.savings.A", color: "var(--success)" },
+  { grade: "B", min: 0.1, label: "grade.savings.B", color: "var(--warning)" },
+  { grade: "C", min: 0, label: "grade.savings.C", color: "var(--warning)" },
+  { grade: "D", min: -0.1, label: "grade.savings.D", color: "var(--danger)" },
+  { grade: "F", min: -Infinity, label: "grade.savings.F", color: "var(--danger)" },
 ];
 
 /**

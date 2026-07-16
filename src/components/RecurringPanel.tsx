@@ -16,6 +16,9 @@ import {
   resolveSchedule,
 } from "../lib/recurring";
 import type { WorkCalendar } from "../lib/workdays";
+import { useI18n } from "../lib/i18n/I18nContext";
+import type { TFn } from "../lib/i18n/translate";
+import { displayCategoryName } from "../lib/i18n/categoryName";
 import styles from "./RecurringPanel.module.css";
 
 interface Props {
@@ -45,27 +48,22 @@ interface FormState {
   note: string;
 }
 
-const WEEKDAYS = [
-  { value: "1", label: "Monday" },
-  { value: "2", label: "Tuesday" },
-  { value: "3", label: "Wednesday" },
-  { value: "4", label: "Thursday" },
-  { value: "5", label: "Friday" },
-  { value: "6", label: "Saturday" },
-  { value: "0", label: "Sunday" },
-];
+/** Weekday option values; labels come from `weekday.long.<value>`. Monday-first
+ *  to match the app's week convention. */
+const WEEKDAY_VALUES = ["1", "2", "3", "4", "5", "6", "0"];
 
 /** The anchors offered for a frequency. Each has its own "specific day" one. */
 function anchorOptions(
-  frequency: RecurringFrequency
+  frequency: RecurringFrequency,
+  t: TFn
 ): { value: RecurringAnchor; label: string }[] {
-  const unit = frequency === "week" ? "week" : "month";
+  const unit = t(frequency === "week" ? "unit.week" : "unit.month");
   return [
     frequency === "week"
-      ? { value: "day-of-week", label: "A specific weekday" }
-      : { value: "day-of-month", label: "A specific day of the month" },
-    { value: "first-working-day", label: `First working day of ${unit}` },
-    { value: "last-working-day", label: `Last working day of ${unit}` },
+      ? { value: "day-of-week", label: t("recurring.anchor.dayOfWeek") }
+      : { value: "day-of-month", label: t("recurring.anchor.dayOfMonth") },
+    { value: "first-working-day", label: t("recurring.anchor.firstWorkingDay", { unit }) },
+    { value: "last-working-day", label: t("recurring.anchor.lastWorkingDay", { unit }) },
   ];
 }
 
@@ -99,6 +97,7 @@ export function RecurringPanel({
   onUpdate,
   onDelete,
 }: Props) {
+  const { t, lang } = useI18n();
   const listFor = (kind: EntryKind) =>
     kind === "income" ? incomeCategories : categories;
 
@@ -162,7 +161,8 @@ export function RecurringPanel({
   }
 
   function labelFor(rule: RecurringRule): string {
-    return listFor(rule.kind).find((c) => c.id === rule.categoryId)?.name ?? "Unknown";
+    const cat = listFor(rule.kind).find((c) => c.id === rule.categoryId);
+    return cat ? displayCategoryName(cat, lang) : t("budget.unknown");
   }
 
   /** True when the date was computed without the holiday data it depends on. */
@@ -173,10 +173,10 @@ export function RecurringPanel({
 
   return (
     <div className="card">
-      <h2>Recurring transactions</h2>
+      <h2>{t("recurring.title")}</h2>
 
       {recurring.length === 0 ? (
-        <p className="empty">No recurring transactions yet. Add one below.</p>
+        <p className="empty">{t("recurring.empty")}</p>
       ) : (
         <ul className={styles.list}>
           {recurring.map((rule) => {
@@ -186,7 +186,7 @@ export function RecurringPanel({
                 <div className={styles.rowHead}>
                   <span className={styles.name}>
                     {labelFor(rule)}
-                    {!rule.enabled && <span className={styles.paused}> · paused</span>}
+                    {!rule.enabled && <span className={styles.paused}>{t("recurring.paused")}</span>}
                   </span>
                   <span
                     className={`${styles.amount} ${rule.kind === "income" ? styles.income : ""}`}
@@ -197,11 +197,11 @@ export function RecurringPanel({
                 </div>
                 <div className={styles.rowMeta}>
                   <span className="muted">
-                    {describeSchedule(rule)} · next{" "}
+                    {describeSchedule(rule, t)} · {t("recurring.next")}{" "}
                     {due === null ? (
                       "—"
                     ) : isApproximate(rule, due) ? (
-                      <span title="Holiday data for this year isn't loaded, so the date may shift once it is.">
+                      <span title={t("recurring.approxTitle")}>
                         ≈{due}
                       </span>
                     ) : (
@@ -213,11 +213,11 @@ export function RecurringPanel({
                       className="btn btn-ghost"
                       onClick={() => onUpdate(rule.id, { enabled: !rule.enabled })}
                     >
-                      {rule.enabled ? "Pause" : "Resume"}
+                      {rule.enabled ? t("recurring.pause") : t("recurring.resume")}
                     </button>
                     <button
                       className="btn btn-ghost btn-icon btn-danger"
-                      aria-label={`Delete ${labelFor(rule)} recurring rule`}
+                      aria-label={t("recurring.deleteAria", { name: labelFor(rule) })}
                       onClick={() => onDelete(rule.id)}
                     >
                       ✕
@@ -234,7 +234,7 @@ export function RecurringPanel({
         <div
           className={styles.kindToggle}
           role="group"
-          aria-label="Recurring type"
+          aria-label={t("recurring.typeAria")}
         >
           <button
             type="button"
@@ -242,7 +242,7 @@ export function RecurringPanel({
             aria-pressed={!isIncome}
             onClick={() => switchKind("expense")}
           >
-            Expense
+            {t("kind.expense")}
           </button>
           <button
             type="button"
@@ -250,13 +250,13 @@ export function RecurringPanel({
             aria-pressed={isIncome}
             onClick={() => switchKind("income")}
           >
-            Income
+            {t("kind.income")}
           </button>
         </div>
 
         <div className={styles.amountRow}>
           <div className="field">
-            <label htmlFor="recurring-amount">Amount</label>
+            <label htmlFor="recurring-amount">{t("field.amount")}</label>
             <input
               id="recurring-amount"
               className="input"
@@ -264,14 +264,14 @@ export function RecurringPanel({
               inputMode="decimal"
               min="0"
               step="0.01"
-              placeholder="0.00"
+              placeholder={t("common.amountPlaceholder")}
               value={form.amount}
               onChange={(e) => update("amount", e.target.value)}
               required
             />
           </div>
           <div className="field">
-            <label htmlFor="recurring-currency">Currency</label>
+            <label htmlFor="recurring-currency">{t("field.currency")}</label>
             <select
               id="recurring-currency"
               className="select"
@@ -288,7 +288,7 @@ export function RecurringPanel({
         </div>
 
         <div className="field">
-          <label htmlFor="recurring-category">Category</label>
+          <label htmlFor="recurring-category">{t("field.category")}</label>
           <select
             id="recurring-category"
             className="select"
@@ -298,20 +298,20 @@ export function RecurringPanel({
             {activeCategories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.icon ? `${c.icon} ` : ""}
-                {c.name}
+                {displayCategoryName(c, lang)}
               </option>
             ))}
           </select>
         </div>
 
-        <div className={styles.kindToggle} role="group" aria-label="Repeats">
+        <div className={styles.kindToggle} role="group" aria-label={t("recurring.repeatsAria")}>
           <button
             type="button"
             className={`${styles.kindBtn} ${!isWeekly ? styles.kindActive : ""}`}
             aria-pressed={!isWeekly}
             onClick={() => switchFrequency("month")}
           >
-            Monthly
+            {t("recurring.monthly")}
           </button>
           <button
             type="button"
@@ -319,19 +319,19 @@ export function RecurringPanel({
             aria-pressed={isWeekly}
             onClick={() => switchFrequency("week")}
           >
-            Weekly
+            {t("recurring.weekly")}
           </button>
         </div>
 
         <div className="field">
-          <label htmlFor="recurring-anchor">Falls on</label>
+          <label htmlFor="recurring-anchor">{t("recurring.fallsOn")}</label>
           <select
             id="recurring-anchor"
             className="select"
             value={form.anchor}
             onChange={(e) => update("anchor", e.target.value as RecurringAnchor)}
           >
-            {anchorOptions(form.frequency).map((o) => (
+            {anchorOptions(form.frequency, t).map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -341,7 +341,7 @@ export function RecurringPanel({
 
         {form.anchor === "day-of-month" && (
           <div className="field">
-            <label htmlFor="recurring-day">Day of month</label>
+            <label htmlFor="recurring-day">{t("recurring.dayOfMonth")}</label>
             <input
               id="recurring-day"
               className="input"
@@ -358,16 +358,16 @@ export function RecurringPanel({
 
         {form.anchor === "day-of-week" && (
           <div className="field">
-            <label htmlFor="recurring-weekday">Weekday</label>
+            <label htmlFor="recurring-weekday">{t("recurring.weekday")}</label>
             <select
               id="recurring-weekday"
               className="select"
               value={form.dayOfWeek}
               onChange={(e) => update("dayOfWeek", e.target.value)}
             >
-              {WEEKDAYS.map((d) => (
-                <option key={d.value} value={d.value}>
-                  {d.label}
+              {WEEKDAY_VALUES.map((v) => (
+                <option key={v} value={v}>
+                  {t(`weekday.long.${v}`)}
                 </option>
               ))}
             </select>
@@ -375,32 +375,27 @@ export function RecurringPanel({
         )}
 
         <div className="field">
-          <label htmlFor="recurring-note">Note (optional)</label>
+          <label htmlFor="recurring-note">{t("common.note")}</label>
           <input
             id="recurring-note"
             className="input"
             type="text"
-            placeholder="e.g. Rent"
+            placeholder={t("recurring.notePlaceholder")}
             value={form.note}
             onChange={(e) => update("note", e.target.value)}
           />
         </div>
 
         <button type="submit" className="btn btn-primary">
-          Add
+          {t("common.add")}
         </button>
 
         <p className="muted" style={{ fontSize: "0.78rem" }}>
-          Materializes as a real transaction each {isWeekly ? "week" : "month"},
-          next time the app is open.{" "}
-          {form.anchor === "day-of-month" &&
-            "Day 29–31 falls back to the month's last day when it's shorter. "}
+          {t("recurring.helpBase", { unit: t(isWeekly ? "unit.week" : "unit.month") })}{" "}
+          {form.anchor === "day-of-month" && `${t("recurring.helpClamp")} `}
           {isWorkingDayAnchor(form.anchor) &&
-            (holidayCountry
-              ? "Working days skip weekends and public holidays. "
-              : "Working days skip weekends only — pick a holiday calendar in Settings to also skip public holidays. ")}
-          Editing a rule takes effect from the next {isWeekly ? "week" : "month"};
-          the current one is never re-applied.
+            `${holidayCountry ? t("recurring.helpWorkHoliday") : t("recurring.helpWorkWeekend")} `}
+          {t("recurring.helpEdit", { unit: t(isWeekly ? "unit.week" : "unit.month") })}
         </p>
       </form>
     </div>

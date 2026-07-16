@@ -1,5 +1,6 @@
 import type { PeriodType } from "../types";
 import { formatPeriodLabel, shiftPeriod } from "../lib/dates";
+import { useI18n } from "../lib/i18n/I18nContext";
 import styles from "./PeriodSelector.module.css";
 
 const PERIODS: PeriodType[] = ["day", "week", "month"];
@@ -17,9 +18,10 @@ export function PeriodSelector({
   onPeriodChange,
   onRefDateChange,
 }: Props) {
+  const { t, locale } = useI18n();
   return (
     <div className={styles.wrap}>
-      <div className={styles.tabs} role="tablist" aria-label="Period">
+      <div className={styles.tabs} role="tablist" aria-label={t("period.tablist")}>
         {PERIODS.map((p) => (
           <button
             key={p}
@@ -28,7 +30,7 @@ export function PeriodSelector({
             className={`${styles.tab} ${p === period ? styles.active : ""}`}
             onClick={() => onPeriodChange(p)}
           >
-            {p[0].toUpperCase() + p.slice(1)}
+            {t(`period.${p}`)}
           </button>
         ))}
       </div>
@@ -36,17 +38,17 @@ export function PeriodSelector({
       <div className={styles.nav}>
         <button
           className="btn btn-icon"
-          aria-label="Previous period"
+          aria-label={t("period.prev")}
           onClick={() => onRefDateChange(shiftPeriod(period, refDate, -1))}
         >
           ‹
         </button>
         <span className={styles.label}>
-          {formatPeriodLabel(period, refDate)}
+          {formatPeriodLabel(period, refDate, locale)}
         </span>
         <button
           className="btn btn-icon"
-          aria-label="Next period"
+          aria-label={t("period.next")}
           onClick={() => onRefDateChange(shiftPeriod(period, refDate, 1))}
         >
           ›
@@ -55,7 +57,7 @@ export function PeriodSelector({
           className="btn btn-ghost"
           onClick={() => onRefDateChange(new Date())}
         >
-          Today
+          {t("period.today")}
         </button>
       </div>
     </div>

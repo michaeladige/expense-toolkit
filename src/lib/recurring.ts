@@ -1,4 +1,5 @@
 import type { RecurringAnchor, RecurringFrequency, RecurringRule } from "../types";
+import type { TFn } from "./i18n/translate";
 import { fromISODate, getRange, shiftPeriod, toISODate } from "./dates";
 import { firstWorkingDay, lastWorkingDay, type WorkCalendar } from "./workdays";
 
@@ -63,34 +64,27 @@ export function isWorkingDayAnchor(anchor: RecurringAnchor): boolean {
   return anchor === "first-working-day" || anchor === "last-working-day";
 }
 
-const WEEKDAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
 /**
  * Human-readable schedule, e.g. "Day 15 of month" or "Last working day of week".
  * Built from `resolveSchedule` so the copy can't drift from what actually fires
  * — the old panel read `rule.dayOfMonth` directly and would render "Day  of
- * month" for any rule that doesn't have one.
+ * month" for any rule that doesn't have one. Copy is looked up via the passed
+ * translator so it follows the active language.
  */
-export function describeSchedule(rule: RecurringRule): string {
+export function describeSchedule(rule: RecurringRule, t: TFn): string {
   const schedule = resolveSchedule(rule);
-  const unit = schedule.frequency === "week" ? "week" : "month";
+  const unit = t(schedule.frequency === "week" ? "unit.week" : "unit.month");
   switch (schedule.anchor) {
     case "day-of-month":
-      return `Day ${schedule.dayOfMonth} of month`;
+      return t("schedule.dayOfMonth", { day: schedule.dayOfMonth });
     case "day-of-week":
-      return `Every ${WEEKDAY_NAMES[schedule.dayOfWeek]}`;
+      return t("schedule.dayOfWeek", {
+        weekday: t(`weekday.long.${schedule.dayOfWeek}`),
+      });
     case "first-working-day":
-      return `First working day of ${unit}`;
+      return t("schedule.firstWorkingDay", { unit });
     case "last-working-day":
-      return `Last working day of ${unit}`;
+      return t("schedule.lastWorkingDay", { unit });
   }
 }
 

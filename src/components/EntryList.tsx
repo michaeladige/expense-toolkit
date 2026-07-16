@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Category, RateMap, TaggedEntry } from "../types";
 import { EntryItem } from "./EntryItem";
 import { FILTERS, byRecency, type Filter } from "../lib/entryFilters";
+import { useI18n } from "../lib/i18n/I18nContext";
 import styles from "./EntryList.module.css";
 
 /** How many rows the collapsed main-view list shows before "View all". */
@@ -30,6 +31,7 @@ export function EntryList({
   onDuplicate,
   onViewAll,
 }: Props) {
+  const { t } = useI18n();
   const [filter, setFilter] = useState<Filter>("all");
 
   const visible = entries.filter((e) => filter === "all" || e.kind === filter);
@@ -39,8 +41,8 @@ export function EntryList({
   return (
     <div className="card">
       <div className={styles.listHeader}>
-        <h2>Transactions ({visible.length})</h2>
-        <div className={styles.filters} role="group" aria-label="Filter transactions">
+        <h2>{t("list.transactions", { n: visible.length })}</h2>
+        <div className={styles.filters} role="group" aria-label={t("list.filterAria")}>
           {FILTERS.map((f) => (
             <button
               key={f.id}
@@ -49,7 +51,7 @@ export function EntryList({
               aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
             >
-              {f.label}
+              {t(`filter.${f.id}`)}
             </button>
           ))}
         </div>
@@ -58,8 +60,10 @@ export function EntryList({
       {sorted.length === 0 ? (
         <p className="empty">
           {filter === "all"
-            ? "No transactions in this period yet."
-            : `No ${filter === "income" ? "income" : "expenses"} in this period yet.`}
+            ? t("list.emptyAll")
+            : filter === "income"
+              ? t("list.emptyIncome")
+              : t("list.emptyExpense")}
         </p>
       ) : (
         <>
@@ -87,7 +91,7 @@ export function EntryList({
               className={`btn btn-ghost ${styles.viewAll}`}
               onClick={onViewAll}
             >
-              View all {sorted.length} transactions
+              {t("list.viewAll", { n: sorted.length })}
             </button>
           )}
         </>

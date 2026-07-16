@@ -4,6 +4,8 @@ import type { Favorite } from "../lib/favorites";
 import { CURRENCIES, OTHER_EXPENSE_ID } from "../lib/constants";
 import { todayISO } from "../lib/dates";
 import { formatMoney } from "../lib/currency";
+import { useI18n } from "../lib/i18n/I18nContext";
+import { displayCategoryName } from "../lib/i18n/categoryName";
 import styles from "./EntryForm.module.css";
 
 interface Props {
@@ -50,6 +52,7 @@ export function EntryForm({
   onSubmit,
   onCancelEdit,
 }: Props) {
+  const { t, lang } = useI18n();
   /** Each side has its own categories; a form field must never mix them. */
   const listFor = (kind: EntryKind) =>
     kind === "income" ? incomeCategories : categories;
@@ -119,14 +122,21 @@ export function EntryForm({
     }
   }
 
-  const noun = isIncome ? "income" : "expense";
+  const heading = editing
+    ? isIncome
+      ? "entryForm.editIncome"
+      : "entryForm.editExpense"
+    : isIncome
+      ? "entryForm.addIncome"
+      : "entryForm.addExpense";
+  const addLabel = isIncome ? "entryForm.addIncome" : "entryForm.addExpense";
 
   return (
     <form className={`card ${styles.form}`} onSubmit={handleSubmit}>
-      <h2>{editing ? `Edit ${noun}` : `Add ${noun}`}</h2>
+      <h2>{t(heading)}</h2>
 
       {!editing && favorites.length > 0 && (
-        <div className={styles.favorites} role="group" aria-label="Quick add">
+        <div className={styles.favorites} role="group" aria-label={t("entryForm.quickAdd")}>
           {favorites.map((fav) => {
             const cat = listFor(fav.kind).find((c) => c.id === fav.categoryId);
             return (
@@ -138,7 +148,7 @@ export function EntryForm({
                 onClick={() => applyFavorite(fav)}
               >
                 <span aria-hidden>{cat?.icon ?? "•"}</span>
-                {cat?.name ?? "Uncategorized"} · {formatMoney(fav.amount, fav.currency)}
+                {displayCategoryName(cat, lang)} · {formatMoney(fav.amount, fav.currency)}
               </button>
             );
           })}
@@ -148,14 +158,14 @@ export function EntryForm({
       {/* Kind is fixed while editing: moving an entry across sides also means
           re-categorising it, so that's a delete-and-re-add, not a toggle. */}
       {!editing && (
-        <div className={styles.kindToggle} role="group" aria-label="Entry type">
+        <div className={styles.kindToggle} role="group" aria-label={t("entryForm.entryType")}>
           <button
             type="button"
             className={`${styles.kindBtn} ${!isIncome ? styles.kindActive : ""}`}
             aria-pressed={!isIncome}
             onClick={() => switchKind("expense")}
           >
-            Expense
+            {t("kind.expense")}
           </button>
           <button
             type="button"
@@ -163,14 +173,14 @@ export function EntryForm({
             aria-pressed={isIncome}
             onClick={() => switchKind("income")}
           >
-            Income
+            {t("kind.income")}
           </button>
         </div>
       )}
 
       <div className={styles.amountRow}>
         <div className="field">
-          <label htmlFor="amount">Amount</label>
+          <label htmlFor="amount">{t("field.amount")}</label>
           <input
             id="amount"
             className="input"
@@ -178,14 +188,14 @@ export function EntryForm({
             inputMode="decimal"
             min="0"
             step="0.01"
-            placeholder="0.00"
+            placeholder={t("common.amountPlaceholder")}
             value={form.amount}
             onChange={(e) => update("amount", e.target.value)}
             required
           />
         </div>
         <div className="field">
-          <label htmlFor="currency">Currency</label>
+          <label htmlFor="currency">{t("field.currency")}</label>
           <select
             id="currency"
             className="select"
@@ -202,7 +212,7 @@ export function EntryForm({
       </div>
 
       <div className="field">
-        <label htmlFor="category">Category</label>
+        <label htmlFor="category">{t("field.category")}</label>
         <select
           id="category"
           className="select"
@@ -212,14 +222,14 @@ export function EntryForm({
           {activeCategories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.icon ? `${c.icon} ` : ""}
-              {c.name}
+              {displayCategoryName(c, lang)}
             </option>
           ))}
         </select>
       </div>
 
       <div className="field">
-        <label htmlFor="date">Date</label>
+        <label htmlFor="date">{t("field.date")}</label>
         <input
           id="date"
           className="input"
@@ -231,12 +241,16 @@ export function EntryForm({
       </div>
 
       <div className="field">
-        <label htmlFor="note">Note (optional)</label>
+        <label htmlFor="note">{t("common.note")}</label>
         <input
           id="note"
           className="input"
           type="text"
-          placeholder={isIncome ? "e.g. March salary" : "e.g. Lunch with team"}
+          placeholder={t(
+            isIncome
+              ? "entryForm.notePlaceholderIncome"
+              : "entryForm.notePlaceholderExpense"
+          )}
           value={form.note}
           onChange={(e) => update("note", e.target.value)}
         />
@@ -244,11 +258,11 @@ export function EntryForm({
 
       <div className={styles.actions}>
         <button type="submit" className="btn btn-primary">
-          {editing ? "Save changes" : `Add ${noun}`}
+          {editing ? t("entryForm.saveChanges") : t(addLabel)}
         </button>
         {editing && (
           <button type="button" className="btn" onClick={onCancelEdit}>
-            Cancel
+            {t("entryForm.cancel")}
           </button>
         )}
       </div>

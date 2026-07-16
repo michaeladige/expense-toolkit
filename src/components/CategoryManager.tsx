@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { Category } from "../types";
 import { CATEGORY_PALETTE } from "../lib/constants";
+import { useI18n } from "../lib/i18n/I18nContext";
+import { displayCategoryName } from "../lib/i18n/categoryName";
 import styles from "./CategoryManager.module.css";
 
 interface Props {
@@ -19,6 +21,7 @@ export function CategoryManager({
   onUpdate,
   onDelete,
 }: Props) {
+  const { t, lang } = useI18n();
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("");
 
@@ -41,7 +44,7 @@ export function CategoryManager({
               className={styles.color}
               type="color"
               value={c.color}
-              aria-label={`${c.name} color`}
+              aria-label={t("catMgr.colorAria", { name: displayCategoryName(c, lang) })}
               onChange={(e) => onUpdate(c.id, { color: e.target.value })}
             />
             <input
@@ -49,7 +52,7 @@ export function CategoryManager({
               type="text"
               value={c.icon ?? ""}
               maxLength={2}
-              aria-label={`${c.name} icon`}
+              aria-label={t("catMgr.iconAria", { name: displayCategoryName(c, lang) })}
               onChange={(e) =>
                 onUpdate(c.id, { icon: e.target.value || undefined })
               }
@@ -58,17 +61,17 @@ export function CategoryManager({
               className={`input ${styles.name}`}
               type="text"
               value={c.name}
-              aria-label="Category name"
+              aria-label={t("catMgr.nameAria")}
               onChange={(e) => onUpdate(c.id, { name: e.target.value })}
             />
             <button
               className="btn btn-ghost btn-icon btn-danger"
-              aria-label={`Delete ${c.name}`}
+              aria-label={t("catMgr.deleteAria", { name: displayCategoryName(c, lang) })}
               disabled={c.id === protectedId}
               title={
                 c.id === protectedId
-                  ? "The default fallback category can't be deleted"
-                  : "Delete category"
+                  ? t("catMgr.protectedTitle")
+                  : t("catMgr.deleteTitle")
               }
               onClick={() => onDelete(c.id)}
             >
@@ -82,21 +85,21 @@ export function CategoryManager({
         <input
           className={`input ${styles.icon}`}
           type="text"
-          placeholder="🙂"
+          placeholder={t("catMgr.newIconPlaceholder")}
           maxLength={2}
           value={icon}
-          aria-label="New category icon"
+          aria-label={t("catMgr.newIconAria")}
           onChange={(e) => setIcon(e.target.value)}
         />
         <input
           className="input"
           type="text"
-          placeholder="New category name"
+          placeholder={t("catMgr.newNamePlaceholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <button type="submit" className="btn btn-primary">
-          Add
+          {t("common.add")}
         </button>
       </form>
     </div>

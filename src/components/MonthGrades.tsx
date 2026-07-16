@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { GradeResult } from "../lib/grade";
 import { formatMoney } from "../lib/currency";
+import { useI18n } from "../lib/i18n/I18nContext";
 import styles from "./MonthGrades.module.css";
 
 export interface SpendingInfo {
@@ -44,6 +45,7 @@ function GradeSlot({
   pending: ReactNode;
   children?: ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <div className={styles.grade}>
       <div className={styles.gradeHead}>
@@ -61,7 +63,7 @@ function GradeSlot({
             {result.grade}
           </div>
           <div className={styles.details}>
-            <p className={styles.desc}>{result.label}</p>
+            <p className={styles.desc}>{t(result.label)}</p>
             {children}
           </div>
         </div>
@@ -77,51 +79,57 @@ export function MonthGrades({
   baseCurrency,
   monthLabel,
 }: Props) {
+  const { t } = useI18n();
   return (
     <div className="card">
-      <h2>Grades · {monthLabel}</h2>
+      <h2>{t("grades.title", { month: monthLabel })}</h2>
 
       <div className={styles.grid}>
         <GradeSlot
-          title="Spending"
+          title={t("grades.spending")}
           measuredAgainst={
             spending?.targetSource === "average"
-              ? "vs Average spend"
-              : "vs Overall budget"
+              ? t("grades.vsAverage")
+              : t("grades.vsBudget")
           }
           result={spending?.grade ?? null}
-          pending="Set an Overall budget below, or come back once a prior month has some expenses to compare against."
+          pending={t("grades.spendingPending")}
         >
           {spending && (
             <>
               <p className={styles.figures}>
-                {formatMoney(monthTotal, baseCurrency)} of{" "}
                 {spending.targetSource === "budget"
-                  ? formatMoney(spending.target, baseCurrency)
-                  : `your ~${formatMoney(spending.target, baseCurrency)} average`}{" "}
-                ({Math.round(spending.grade.ratio * 100)}%)
+                  ? t("grades.ofBudget", {
+                      total: formatMoney(monthTotal, baseCurrency),
+                      target: formatMoney(spending.target, baseCurrency),
+                      pct: Math.round(spending.grade.ratio * 100),
+                    })
+                  : t("grades.ofAverage", {
+                      total: formatMoney(monthTotal, baseCurrency),
+                      target: formatMoney(spending.target, baseCurrency),
+                      pct: Math.round(spending.grade.ratio * 100),
+                    })}
               </p>
               {spending.targetSource === "average" && (
-                <p className={styles.note}>
-                  No Overall budget set — grading against your average monthly
-                  spend instead.
-                </p>
+                <p className={styles.note}>{t("grades.averageNote")}</p>
               )}
             </>
           )}
         </GradeSlot>
 
         <GradeSlot
-          title="Savings"
-          measuredAgainst="vs Income"
+          title={t("grades.savings")}
+          measuredAgainst={t("grades.vsIncome")}
           result={savings?.grade ?? null}
-          pending="Record some income this month to get a savings grade."
+          pending={t("grades.savingsPending")}
         >
           {savings && (
             <p className={styles.figures}>
-              Kept {formatMoney(savings.net, baseCurrency)} of{" "}
-              {formatMoney(savings.income, baseCurrency)} earned (
-              {Math.round(savings.grade.ratio * 100)}%)
+              {t("grades.kept", {
+                net: formatMoney(savings.net, baseCurrency),
+                income: formatMoney(savings.income, baseCurrency),
+                pct: Math.round(savings.grade.ratio * 100),
+              })}
             </p>
           )}
         </GradeSlot>

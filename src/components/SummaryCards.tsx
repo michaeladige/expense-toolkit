@@ -1,6 +1,7 @@
 import type { Expense, Income, RateMap } from "../types";
 import { formatMoney } from "../lib/currency";
 import { netInBase, sumByCurrency } from "../lib/summary";
+import { useI18n } from "../lib/i18n/I18nContext";
 import styles from "./SummaryCards.module.css";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function SummaryCards({ expenses, incomes, baseCurrency, rates }: Props) {
+  const { t } = useI18n();
   const perCurrency = sumByCurrency(expenses);
   const { income, expense, net, missing } = netInBase(
     incomes,
@@ -24,7 +26,7 @@ export function SummaryCards({ expenses, incomes, baseCurrency, rates }: Props) 
   return (
     <div className={styles.grid}>
       <div className={`card ${styles.totalCard}`}>
-        <span className={styles.caption}>Net ({baseCurrency})</span>
+        <span className={styles.caption}>{t("summary.net", { currency: baseCurrency })}</span>
         <strong
           className={`${styles.total} ${net < 0 ? styles.negative : styles.positive}`}
         >
@@ -33,20 +35,21 @@ export function SummaryCards({ expenses, incomes, baseCurrency, rates }: Props) 
           {formatMoney(net, baseCurrency)}
         </strong>
         <span className={styles.meta}>
-          {count} transaction{count === 1 ? "" : "s"}
-          {currencies.length > 1 && ` · ${currencies.length} currencies`}
+          {t("summary.txCount", { n: count })}
+          {currencies.length > 1 &&
+            ` · ${t("summary.currencyCount", { n: currencies.length })}`}
         </span>
       </div>
 
       <div className={`card ${styles.flowCard}`}>
         <div>
-          <span className={styles.caption}>Income</span>
+          <span className={styles.caption}>{t("summary.income")}</span>
           <strong className={`${styles.flowValue} ${styles.positive}`}>
             {formatMoney(income, baseCurrency)}
           </strong>
         </div>
         <div>
-          <span className={styles.caption}>Expenses</span>
+          <span className={styles.caption}>{t("summary.expenses")}</span>
           <strong className={styles.flowValue}>
             {formatMoney(expense, baseCurrency)}
           </strong>
@@ -54,7 +57,7 @@ export function SummaryCards({ expenses, incomes, baseCurrency, rates }: Props) 
       </div>
 
       <div className={`card ${styles.breakdown}`}>
-        <span className={styles.caption}>Expenses by currency</span>
+        <span className={styles.caption}>{t("summary.byCurrency")}</span>
         {currencies.length === 0 ? (
           <span className="muted">—</span>
         ) : (

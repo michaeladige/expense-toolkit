@@ -12,6 +12,8 @@ import { todayISO } from "../lib/dates";
 import { formatMoney } from "../lib/currency";
 import { buildReport, pendingReportPeriods, previousNet } from "../lib/reports";
 import { notify } from "../lib/notify";
+import type { Language } from "../lib/i18n/types";
+import { translate } from "../lib/i18n/translate";
 import type { RateStatus } from "./useExchangeRates";
 
 const PERIODS: ReportPeriod[] = ["week", "month"];
@@ -29,21 +31,27 @@ interface Args {
   updateSettings: (data: Partial<Settings>) => void;
 }
 
-function summarize(generated: Report[]): { title: string; body: string } {
+function summarize(
+  generated: Report[],
+  lang: Language
+): { title: string; body: string } {
   if (generated.length === 1) {
     const r = generated[0];
     const sign = r.net >= 0 ? "+" : "";
     const approx = r.approximate ? "≈" : "";
+    const period = translate(lang, r.period === "week" ? "period.weekly" : "period.monthly");
     return {
-      title: `Your ${r.period === "week" ? "weekly" : "monthly"} report is ready`,
-      body:
-        `${r.label}: ${approx}${sign}${formatMoney(r.net, r.baseCurrency)} net · ` +
-        `${formatMoney(r.incomeTotal, r.baseCurrency)} in, ` +
-        `${formatMoney(r.expenseTotal, r.baseCurrency)} out`,
+      title: translate(lang, "notify.singleTitle", { period }),
+      body: translate(lang, "notify.singleBody", {
+        label: r.label,
+        net: `${approx}${sign}${formatMoney(r.net, r.baseCurrency)}`,
+        income: formatMoney(r.incomeTotal, r.baseCurrency),
+        expense: formatMoney(r.expenseTotal, r.baseCurrency),
+      }),
     };
   }
   return {
-    title: `${generated.length} new reports are ready`,
+    title: translate(lang, "notify.multiTitle", { n: generated.length }),
     body: generated.map((r) => r.label).join(" · "),
   };
 }
@@ -98,6 +106,7 @@ export function useAutoReports({
           baseCurrency: settings.baseCurrency,
           rates,
           prevNet: previousNet(period, ref, [...reports, ...generated]),
+          lang: settings.language ?? "en",
         });
         // null when the period had no activity — nothing worth announcing.
         if (report) generated.push(report);
@@ -109,7 +118,7 @@ export function useAutoReports({
     setFresh(generated);
 
     if (settings.notificationsEnabled) {
-      const { title, body } = summarize(generated);
+      const { title, body } = summarize(generated, settings.language ?? "en");
       // A single tag so repeat announcements replace rather than stack.
       void notify(title, { body, tag: "expense-toolkit-reports" });
     }
