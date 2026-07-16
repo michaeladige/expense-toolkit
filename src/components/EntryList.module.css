@@ -69,17 +69,26 @@
   min-width: 0;
   flex: 1;
 }
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
 .title {
   font-weight: 600;
   font-size: 0.92rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+  padding-top: 0.1rem;
 }
 
 .bottomRow {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
@@ -91,15 +100,6 @@
   white-space: nowrap;
   min-width: 0;
   flex: 1;
-  padding-top: 0.15rem;
-}
-
-.amountActions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.2rem;
-  flex: 0 0 auto;
 }
 
 .amount {
@@ -107,6 +107,7 @@
   flex-direction: column;
   align-items: flex-end;
   text-align: right;
+  flex: 0 0 auto;
 }
 .primaryAmount {
   font-weight: 600;
