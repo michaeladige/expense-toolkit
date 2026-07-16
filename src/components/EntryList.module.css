@@ -122,6 +122,16 @@
   font-variant-numeric: tabular-nums;
 }
 
+.viewAll {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
 .rowActions {
   display: flex;
   gap: 0.1rem;
