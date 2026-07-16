@@ -100,3 +100,119 @@ export function buildDayTypeBreakdown(
 
   return { stats, grandTotal, approximate, holidaysKnown };
 }
+
+/** True when any day type recorded spending — the card's non-empty gate. */
+export function hasActivity(b: DayTypeBreakdown): boolean {
+  return b.grandTotal > 0;
+}
+
+const TYPE_NOUN: Record<DayType, string> = {
+  weekday: "weekdays",
+  weekend: "weekends",
+  holiday: "holidays",
+};
+
+/** The day type with the highest per-day average, among those with activity. */
+function topByAverage(b: DayTypeBreakdown): DayTypeStat | null {
+  const active = DAY_TYPES.map((t) => b.stats[t]).filter((s) => s.activeDays > 0);
+  if (active.length === 0) return null;
+  return active.reduce((hi, s) => (s.average > hi.average ? s : hi));
+}
+
+/** The next-highest per-day average below `top`, or null if `top` is alone. */
+function runnerUp(b: DayTypeBreakdown, top: DayTypeStat): DayTypeStat | null {
+  const rest = DAY_TYPES.map((t) => b.stats[t]).filter(
+    (s) => s.activeDays > 0 && s.type !== top.type
+  );
+  if (rest.length === 0) return null;
+  return rest.reduce((hi, s) => (s.average > hi.average ? s : hi));
+}
+
+/**
+ * Stable index into a template list from the rounded stats, so the chosen line
+ * doesn't flicker between renders (the breakdown object is recomputed each
+ * render, but its rounded numbers are stable).
+ */
+function pick(options: string[], seed: number): string {
+  const i = Math.abs(Math.round(seed)) % options.length;
+  return options[i];
+}
+
+const SINGLE_TYPE_VERDICTS: Record<DayType, string[]> = {
+  weekday: [
+    "Every dollar you log lands on a weekday. A creature of pure routine.",
+    "All weekday spending. The weekend wallet is in witness protection.",
+  ],
+  weekend: [
+    "Every expense is a weekend expense. Monday–Friday you simply cease to exist.",
+    "100% weekend spending. The week is just the loading screen for Saturday.",
+  ],
+  holiday: [
+    "You only spend on holidays. An impressively festive data set.",
+    "All holiday spending — you treat the calendar's red days as a personal challenge.",
+  ],
+};
+
+/**
+ * A one-line, tongue-in-cheek read of the spending shape. Deterministic: no
+ * randomness, no network.
+ */
+export function verdictLine(b: DayTypeBreakdown): string {
+  const top = topByAverage(b);
+  if (!top) return "";
+  const seed = Math.round(b.grandTotal);
+  const other = runnerUp(b, top);
+  if (!other) return pick(SINGLE_TYPE_VERDICTS[top.type], seed);
+
+  const ratio = other.average > 0 ? top.average / other.average : Infinity;
+  const topNoun = TYPE_NOUN[top.type];
+  const otherNoun = TYPE_NOUN[other.type];
+
+  if (ratio < 1.15) {
+    return pick(
+      [
+        `Your ${topNoun} and ${otherNoun} spend at nearly the same clip — refreshingly consistent, or refreshingly doomed.`,
+        `${cap(topNoun)} and ${otherNoun} are neck and neck. Your wallet does not read the calendar.`,
+      ],
+      seed
+    );
+  }
+  if (ratio >= 2) {
+    return pick(
+      [
+        `On ${topNoun} your day-rate is ${ratio.toFixed(1)}× your ${otherNoun}. The other days are just savings in disguise.`,
+        `${cap(topNoun)} cost you ${ratio.toFixed(1)}× what ${otherNoun} do. That's not a habit, that's a lifestyle.`,
+      ],
+      seed
+    );
+  }
+  return pick(
+    [
+      `${cap(topNoun)} edge out ${otherNoun} as your priciest day type. Noted.`,
+      `You lean toward spending on ${topNoun} more than ${otherNoun}. Predictable, in a comforting way.`,
+    ],
+    seed
+  );
+}
+
+/**
+ * One genuinely useful nudge, keyed off the same signal as the verdict.
+ */
+export function adviceLine(b: DayTypeBreakdown): string {
+  const top = topByAverage(b);
+  if (!top) return "";
+  const other = runnerUp(b, top);
+  if (!other) {
+    return "Log a few more days and this splits into a real weekday-vs-weekend comparison.";
+  }
+  const ratio = other.average > 0 ? top.average / other.average : Infinity;
+  const topNoun = TYPE_NOUN[top.type];
+  if (ratio >= 1.5 && Number.isFinite(ratio)) {
+    return `Your ${topNoun} day-rate runs ${ratio.toFixed(1)}× the rest — deciding one "fun budget" number ahead of time tends to cap those days.`;
+  }
+  return "Your day types are fairly balanced — a single overall monthly budget will serve you better than fussing over which day it is.";
+}
+
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
