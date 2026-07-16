@@ -86,7 +86,8 @@ export function DayTypeAnalytics({ breakdown, baseCurrency }: Props) {
 
           {!holidaysKnown && (
             <p className={styles.hint}>
-              Set a holiday country in Settings to split out holiday spending.
+              Holiday spending appears once a holiday country's calendar is
+              available (set one in Settings).
             </p>
           )}
 

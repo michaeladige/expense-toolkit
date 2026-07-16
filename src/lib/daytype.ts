@@ -177,7 +177,7 @@ export function verdictLine(b: DayTypeBreakdown): string {
       seed
     );
   }
-  if (ratio >= 2) {
+  if (ratio >= 2 && Number.isFinite(ratio)) {
     return pick(
       [
         `On ${topNoun} your day-rate is ${ratio.toFixed(1)}× your ${otherNoun}. The other days are just savings in disguise.`,
