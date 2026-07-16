@@ -10,6 +10,7 @@ interface Props {
   rates: RateMap;
   onEdit: (e: TaggedEntry) => void;
   onDelete: (e: TaggedEntry) => void;
+  onDuplicate: (e: TaggedEntry) => void;
 }
 
 export function EntryItem({
@@ -19,6 +20,7 @@ export function EntryItem({
   rates,
   onEdit,
   onDelete,
+  onDuplicate,
 }: Props) {
   const converted =
     entry.currency !== baseCurrency
@@ -65,6 +67,13 @@ export function EntryItem({
       </div>
 
       <div className={styles.rowActions}>
+        <button
+          className="btn btn-ghost btn-icon"
+          aria-label={`Duplicate ${noun}`}
+          onClick={() => onDuplicate(entry)}
+        >
+          ⧉
+        </button>
         <button
           className="btn btn-ghost btn-icon"
           aria-label={`Edit ${noun}`}

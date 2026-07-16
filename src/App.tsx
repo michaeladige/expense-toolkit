@@ -3,14 +3,17 @@ import type { EntryKind, Expense, PeriodType, TaggedEntry } from "./types";
 import { useExpenses } from "./store/ExpenseContext";
 import { useExchangeRates, type RateStatus } from "./hooks/useExchangeRates";
 import { useAutoReports } from "./hooks/useAutoReports";
+import { useRecurring } from "./hooks/useRecurring";
 import {
   getRange,
   isWithinRange,
   formatPeriodLabel,
   getRecentPeriods,
   monthKey,
+  todayISO,
 } from "./lib/dates";
 import { sumByCategoryInBase, totalInBase, totalsByMonthInBase } from "./lib/summary";
+import { topFavorites } from "./lib/favorites";
 import { gradeSavings, gradeSpending } from "./lib/grade";
 import { PeriodSelector } from "./components/PeriodSelector";
 import { EntryForm } from "./components/EntryForm";
@@ -20,6 +23,7 @@ import { CategoryChart } from "./components/CategoryChart";
 import { TrendChart } from "./components/TrendChart";
 import { MonthGrades } from "./components/MonthGrades";
 import { BudgetPanel } from "./components/BudgetPanel";
+import { RecurringPanel } from "./components/RecurringPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { ReportsPanel } from "./components/ReportsPanel";
 import { ReportToast } from "./components/ReportToast";
@@ -60,6 +64,11 @@ export default function App() {
     updateSettings: store.updateSettings,
   });
 
+  useRecurring({
+    recurring: store.recurring,
+    applyRecurring: store.applyRecurring,
+  });
+
   // Expenses within the currently selected period.
   const periodExpenses = useMemo(() => {
     const range = getRange(period, refDate);
@@ -79,6 +88,13 @@ export default function App() {
       ...periodIncomes.map((e) => ({ ...e, kind: "income" as const })),
     ],
     [periodExpenses, periodIncomes]
+  );
+
+  // Most frequent recent (kind, category, amount, currency) combos, for the
+  // quick-add chips. Derived, not stored — needs no management UI.
+  const favorites = useMemo(
+    () => topFavorites(store.expenses, store.incomes),
+    [store.expenses, store.incomes]
   );
 
   // Category slices for the chart (period-scoped, converted to base).
@@ -188,6 +204,20 @@ export default function App() {
     if (editing?.kind === entry.kind && editing.id === entry.id) setEditing(null);
   }
 
+  // Re-logs the same entry dated today — for repeat purchases like "coffee
+  // again" — rather than copying it to its original date.
+  function handleDuplicate(entry: TaggedEntry) {
+    const draft = {
+      amount: entry.amount,
+      currency: entry.currency,
+      categoryId: entry.categoryId,
+      date: todayISO(),
+      note: entry.note,
+    };
+    if (entry.kind === "income") store.addIncome(draft);
+    else store.addExpense(draft);
+  }
+
   const pill = RATE_PILL[status];
 
   return (
@@ -245,6 +275,7 @@ export default function App() {
               incomeCategories={store.incomeCategories}
               defaultCurrency={settings.baseCurrency}
               editing={editing}
+              favorites={favorites}
               onSubmit={handleSubmit}
               onCancelEdit={() => setEditing(null)}
             />
@@ -256,6 +287,7 @@ export default function App() {
               rates={rates}
               onEdit={setEditing}
               onDelete={handleDelete}
+              onDuplicate={handleDuplicate}
             />
           </div>
 
@@ -286,6 +318,14 @@ export default function App() {
               onSetBudget={store.setBudget}
               onRemoveBudget={store.removeBudget}
             />
+            <RecurringPanel
+              categories={store.categories}
+              incomeCategories={store.incomeCategories}
+              recurring={store.recurring}
+              onAdd={store.addRecurring}
+              onUpdate={store.updateRecurring}
+              onDelete={store.deleteRecurring}
+            />
           </div>
         </div>
       </main>
@@ -307,11 +347,15 @@ export default function App() {
           onDeleteIncomeCategory={store.deleteIncomeCategory}
           expenses={store.expenses}
           incomes={store.incomes}
+          budgets={store.budgets}
+          reports={store.reports}
+          recurring={store.recurring}
           categoryById={store.categoryById}
           incomeCategoryById={store.incomeCategoryById}
           onImportExpenses={store.importExpenses}
           onImportIncomes={store.importIncomes}
           onClearAll={store.clearAllData}
+          onRestoreAll={store.restoreAll}
           onClose={() => setSettingsOpen(false)}
         />
       )}

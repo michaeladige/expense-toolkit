@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import type { Category, EntryKind, Expense, TaggedEntry } from "../types";
+import type { Favorite } from "../lib/favorites";
 import { CURRENCIES, OTHER_EXPENSE_ID } from "../lib/constants";
 import { todayISO } from "../lib/dates";
+import { formatMoney } from "../lib/currency";
 import styles from "./EntryForm.module.css";
 
 interface Props {
@@ -9,6 +11,7 @@ interface Props {
   incomeCategories: Category[];
   defaultCurrency: string;
   editing: TaggedEntry | null;
+  favorites: Favorite[];
   onSubmit: (kind: EntryKind, data: Omit<Expense, "id" | "createdAt">) => void;
   onCancelEdit: () => void;
 }
@@ -43,6 +46,7 @@ export function EntryForm({
   incomeCategories,
   defaultCurrency,
   editing,
+  favorites,
   onSubmit,
   onCancelEdit,
 }: Props) {
@@ -86,6 +90,19 @@ export function EntryForm({
     }));
   }
 
+  /** Prefills the form from a favorite; the user still reviews and hits Save —
+   *  there's no undo in this app, so a one-tap silent write is the wrong default. */
+  function applyFavorite(fav: Favorite) {
+    setForm({
+      kind: fav.kind,
+      amount: String(fav.amount),
+      currency: fav.currency,
+      categoryId: fav.categoryId,
+      date: todayISO(),
+      note: "",
+    });
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const amount = parseFloat(form.amount);
@@ -107,6 +124,26 @@ export function EntryForm({
   return (
     <form className={`card ${styles.form}`} onSubmit={handleSubmit}>
       <h2>{editing ? `Edit ${noun}` : `Add ${noun}`}</h2>
+
+      {!editing && favorites.length > 0 && (
+        <div className={styles.favorites} role="group" aria-label="Quick add">
+          {favorites.map((fav) => {
+            const cat = listFor(fav.kind).find((c) => c.id === fav.categoryId);
+            return (
+              <button
+                key={`${fav.kind}:${fav.categoryId}:${fav.amount}:${fav.currency}`}
+                type="button"
+                className={styles.favoriteChip}
+                style={{ borderColor: `${cat?.color ?? "var(--border)"}66` }}
+                onClick={() => applyFavorite(fav)}
+              >
+                <span aria-hidden>{cat?.icon ?? "•"}</span>
+                {cat?.name ?? "Uncategorized"} · {formatMoney(fav.amount, fav.currency)}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Kind is fixed while editing: moving an entry across sides also means
           re-categorising it, so that's a delete-and-re-add, not a toggle. */}

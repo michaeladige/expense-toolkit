@@ -48,3 +48,22 @@
   gap: 0.5rem;
   margin-top: 0.25rem;
 }
+
+.favorites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.favoriteChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}

@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
   incomeCategories: "expense-toolkit:income-categories",
   budgets: "expense-toolkit:budgets",
   reports: "expense-toolkit:reports",
+  recurring: "expense-toolkit:recurring",
   settings: "expense-toolkit:settings",
   rates: "expense-toolkit:rates",
 } as const;

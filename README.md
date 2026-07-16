@@ -21,7 +21,13 @@ expenses, income, categories, budgets, reports, and settings are stored in
 
 - **Add / edit / delete transactions** — expenses *and* income, each with an
   amount, currency, category, date, and an optional note. One form with an
-  Expense/Income toggle; one list with an All/Expenses/Income filter.
+  Expense/Income toggle; one list with an All/Expenses/Income filter. Each
+  entry can also be **duplicated** (dated today) for quick repeat logging, and
+  the form surfaces **quick-add chips** for your most frequent recent
+  (category, amount) combos.
+- **Recurring transactions** — define a monthly expense or income (rent,
+  salary, a subscription) and it materializes as a real transaction on the
+  day it's due, the next time you open the app.
 - **Day / Week / Month views** with previous/next navigation and a "Today" jump.
 - **Income vs. expenses** — the summary shows income, expenses, and **net** for
   the selected period.
@@ -53,6 +59,11 @@ expenses, income, categories, budgets, reports, and settings are stored in
   `date, type, amount, currency, category, note`), and a "Clear all" reset.
   Files exported before income existed (no `type` column) still import fine, as
   all-expenses.
+- **Full JSON backup / restore** — a single file capturing everything: not just
+  transactions but categories (with colors/icons), budgets, reports, recurring
+  rules, and settings. CSV can't round-trip most of that; the JSON backup is
+  the real safety net, and restoring **replaces** current data (with a
+  confirmation first).
 - **Installable / offline (PWA)** — install to your home screen or desktop, and
   the app shell loads with no network at all after the first visit.
 

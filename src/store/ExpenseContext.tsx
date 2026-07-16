@@ -10,9 +10,11 @@ import type {
   Category,
   Expense,
   Income,
+  RecurringRule,
   Report,
   Settings,
 } from "../types";
+import type { BackupData } from "../lib/backup";
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_INCOME_CATEGORIES,
@@ -36,6 +38,7 @@ interface ExpenseStore {
   incomeCategories: Category[];
   budgets: Budget[];
   reports: Report[];
+  recurring: RecurringRule[];
   settings: Settings;
 
   addExpense: (data: Omit<Expense, "id" | "createdAt">) => void;
@@ -43,6 +46,7 @@ interface ExpenseStore {
   deleteExpense: (id: string) => void;
   importExpenses: (list: Omit<Expense, "id" | "createdAt">[]) => void;
   clearAllData: () => void;
+  restoreAll: (data: BackupData) => void;
 
   addIncome: (data: Omit<Income, "id" | "createdAt">) => void;
   updateIncome: (id: string, data: Partial<Omit<Income, "id">>) => void;
@@ -61,6 +65,14 @@ interface ExpenseStore {
   removeBudget: (id: string) => void;
 
   addReports: (list: Report[]) => void;
+
+  addRecurring: (data: Omit<RecurringRule, "id">) => void;
+  updateRecurring: (id: string, data: Partial<Omit<RecurringRule, "id">>) => void;
+  deleteRecurring: (id: string) => void;
+  /** Materializes the given due dates as entries for a rule and advances its
+   *  `lastApplied` watermark in the same pass, so a partial failure can't
+   *  double-apply an occurrence. */
+  applyRecurring: (rule: RecurringRule, dates: string[]) => void;
 
   updateSettings: (data: Partial<Settings>) => void;
 
@@ -102,6 +114,10 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   );
   const [reports, setReports] = useLocalStorage<Report[]>(
     STORAGE_KEYS.reports,
+    []
+  );
+  const [recurring, setRecurring] = useLocalStorage<RecurringRule[]>(
+    STORAGE_KEYS.recurring,
     []
   );
   const [settings, setSettings] = useLocalStorage<Settings>(
@@ -182,6 +198,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     setIncomes([]);
     setBudgets([]);
     setReports([]);
+    setRecurring([]);
     setCategories(DEFAULT_CATEGORIES);
     setIncomeCategories(DEFAULT_INCOME_CATEGORIES);
     setSettings(DEFAULT_SETTINGS);
@@ -190,10 +207,34 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     setIncomes,
     setBudgets,
     setReports,
+    setRecurring,
     setCategories,
     setIncomeCategories,
     setSettings,
   ]);
+
+  const restoreAll = useCallback(
+    (data: BackupData) => {
+      setExpenses(data.expenses);
+      setCategories(data.categories);
+      setIncomes(data.incomes);
+      setIncomeCategories(data.incomeCategories);
+      setBudgets(data.budgets);
+      setReports(data.reports);
+      setRecurring(data.recurring);
+      setSettings(data.settings);
+    },
+    [
+      setExpenses,
+      setCategories,
+      setIncomes,
+      setIncomeCategories,
+      setBudgets,
+      setReports,
+      setRecurring,
+      setSettings,
+    ]
+  );
 
   const addCategory = useCallback(
     (data: Omit<Category, "id">) =>
@@ -214,8 +255,9 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       setCategories((prev) => prev.filter((c) => c.id !== id));
       setExpenses((prev) => reassign(prev, id, OTHER_EXPENSE_ID));
       setBudgets((prev) => prev.filter((b) => b.categoryId !== id));
+      setRecurring((prev) => reassign(prev, id, OTHER_EXPENSE_ID));
     },
-    [setCategories, setExpenses, setBudgets]
+    [setCategories, setExpenses, setBudgets, setRecurring]
   );
 
   const addIncomeCategory = useCallback(
@@ -236,8 +278,9 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     (id: string) => {
       setIncomeCategories((prev) => prev.filter((c) => c.id !== id));
       setIncomes((prev) => reassign(prev, id, OTHER_INCOME_ID));
+      setRecurring((prev) => reassign(prev, id, OTHER_INCOME_ID));
     },
-    [setIncomeCategories, setIncomes]
+    [setIncomeCategories, setIncomes, setRecurring]
   );
 
   const setBudget = useCallback(
@@ -274,6 +317,55 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     [setReports]
   );
 
+  const addRecurring = useCallback(
+    (data: Omit<RecurringRule, "id">) =>
+      setRecurring((prev) => [...prev, { ...data, id: uid() }]),
+    [setRecurring]
+  );
+
+  const updateRecurring = useCallback(
+    (id: string, data: Partial<Omit<RecurringRule, "id">>) =>
+      setRecurring((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, ...data } : r))
+      ),
+    [setRecurring]
+  );
+
+  const deleteRecurring = useCallback(
+    (id: string) => setRecurring((prev) => prev.filter((r) => r.id !== id)),
+    [setRecurring]
+  );
+
+  const applyRecurring = useCallback(
+    (rule: RecurringRule, dates: string[]) => {
+      if (dates.length === 0) return;
+      const now = new Date().toISOString();
+      const created = dates.map((date) => ({
+        id: uid(),
+        createdAt: now,
+        amount: rule.amount,
+        currency: rule.currency,
+        categoryId: rule.categoryId,
+        date,
+        note: rule.note,
+        recurringId: rule.id,
+      }));
+      if (rule.kind === "income") {
+        setIncomes((prev) => [...created, ...prev]);
+      } else {
+        setExpenses((prev) => [...created, ...prev]);
+      }
+      // `dates` is oldest-first (see dueDates), so the last entry is the most
+      // recent occurrence — advance the watermark to it in the same pass so a
+      // dropped update can't leave an occurrence appliable twice.
+      const lastDate = dates[dates.length - 1];
+      setRecurring((prev) =>
+        prev.map((r) => (r.id === rule.id ? { ...r, lastApplied: lastDate } : r))
+      );
+    },
+    [setExpenses, setIncomes, setRecurring]
+  );
+
   const updateSettings = useCallback(
     (data: Partial<Settings>) => setSettings((prev) => ({ ...prev, ...data })),
     [setSettings]
@@ -297,12 +389,14 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       incomeCategories,
       budgets,
       reports,
+      recurring,
       settings,
       addExpense,
       updateExpense,
       deleteExpense,
       importExpenses,
       clearAllData,
+      restoreAll,
       addIncome,
       updateIncome,
       deleteIncome,
@@ -316,6 +410,10 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       setBudget,
       removeBudget,
       addReports,
+      addRecurring,
+      updateRecurring,
+      deleteRecurring,
+      applyRecurring,
       updateSettings,
       categoryById,
       incomeCategoryById,
@@ -327,12 +425,14 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       incomeCategories,
       budgets,
       reports,
+      recurring,
       settings,
       addExpense,
       updateExpense,
       deleteExpense,
       importExpenses,
       clearAllData,
+      restoreAll,
       addIncome,
       updateIncome,
       deleteIncome,
@@ -346,6 +446,10 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       setBudget,
       removeBudget,
       addReports,
+      addRecurring,
+      updateRecurring,
+      deleteRecurring,
+      applyRecurring,
       updateSettings,
       categoryById,
       incomeCategoryById,

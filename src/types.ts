@@ -26,6 +26,8 @@ export interface Expense extends Entry {
   note?: string;
   /** ISO timestamp of creation. */
   createdAt: string;
+  /** Set when this entry was materialized from a RecurringRule. */
+  recurringId?: string;
 }
 
 /** Money coming in. Same shape as Expense, but categorised from its own list. */
@@ -34,6 +36,8 @@ export interface Income extends Entry {
   note?: string;
   /** ISO timestamp of creation. */
   createdAt: string;
+  /** Set when this entry was materialized from a RecurringRule. */
+  recurringId?: string;
 }
 
 /**
@@ -60,6 +64,26 @@ export interface Budget {
   categoryId: string | "all";
   /** Monthly limit expressed in the base currency. */
   amount: number;
+}
+
+/**
+ * A monthly recurring expense or income (e.g. rent, salary). Materializes
+ * into real entries on app open/focus, same trigger as automatic reports.
+ */
+export interface RecurringRule {
+  id: string;
+  kind: EntryKind;
+  amount: number;
+  currency: string;
+  categoryId: string;
+  note?: string;
+  /** 1-31; clamped to the month's last day when it doesn't exist (e.g. 31 in April). */
+  dayOfMonth: number;
+  /** Local "YYYY-MM-DD"; occurrences before this date are never materialized. */
+  startDate: string;
+  /** Local "YYYY-MM-DD" of the most recent occurrence applied, if any. */
+  lastApplied?: string;
+  enabled: boolean;
 }
 
 export interface Settings {

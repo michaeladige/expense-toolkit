@@ -1,5 +1,14 @@
 import { useState } from "react";
-import type { Category, Expense, Income, Settings } from "../types";
+import type {
+  Budget,
+  Category,
+  Expense,
+  Income,
+  RecurringRule,
+  Report,
+  Settings,
+} from "../types";
+import type { BackupData } from "../lib/backup";
 import type { RateStatus } from "../hooks/useExchangeRates";
 import { CURRENCIES, OTHER_EXPENSE_ID, OTHER_INCOME_ID } from "../lib/constants";
 import { permission, requestPermission, supported } from "../lib/notify";
@@ -23,11 +32,15 @@ interface Props {
   onDeleteIncomeCategory: (id: string) => void;
   expenses: Expense[];
   incomes: Income[];
+  budgets: Budget[];
+  reports: Report[];
+  recurring: RecurringRule[];
   categoryById: (id: string) => Category | undefined;
   incomeCategoryById: (id: string) => Category | undefined;
   onImportExpenses: (list: Omit<Expense, "id" | "createdAt">[]) => void;
   onImportIncomes: (list: Omit<Income, "id" | "createdAt">[]) => void;
   onClearAll: () => void;
+  onRestoreAll: (data: BackupData) => void;
   onClose: () => void;
 }
 
@@ -55,11 +68,15 @@ export function SettingsPanel({
   onDeleteIncomeCategory,
   expenses,
   incomes,
+  budgets,
+  reports,
+  recurring,
   categoryById,
   incomeCategoryById,
   onImportExpenses,
   onImportIncomes,
   onClearAll,
+  onRestoreAll,
   onClose,
 }: Props) {
   const [perm, setPerm] = useState(permission);
@@ -205,11 +222,16 @@ export function SettingsPanel({
             incomes={incomes}
             categories={categories}
             incomeCategories={incomeCategories}
+            budgets={budgets}
+            reports={reports}
+            recurring={recurring}
+            settings={settings}
             categoryById={categoryById}
             incomeCategoryById={incomeCategoryById}
             onImportExpenses={onImportExpenses}
             onImportIncomes={onImportIncomes}
             onClearAll={onClearAll}
+            onRestoreAll={onRestoreAll}
           />
         </section>
       </aside>

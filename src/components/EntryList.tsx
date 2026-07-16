@@ -19,6 +19,7 @@ interface Props {
   rates: RateMap;
   onEdit: (e: TaggedEntry) => void;
   onDelete: (e: TaggedEntry) => void;
+  onDuplicate: (e: TaggedEntry) => void;
 }
 
 export function EntryList({
@@ -29,6 +30,7 @@ export function EntryList({
   rates,
   onEdit,
   onDelete,
+  onDuplicate,
 }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -79,6 +81,7 @@ export function EntryList({
               rates={rates}
               onEdit={onEdit}
               onDelete={onDelete}
+              onDuplicate={onDuplicate}
             />
           ))}
         </ul>
