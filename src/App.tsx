@@ -37,6 +37,7 @@ import { EntryList } from "./components/EntryList";
 import { AllEntriesPanel } from "./components/AllEntriesPanel";
 import { SummaryCards } from "./components/SummaryCards";
 import { CategoryChart } from "./components/CategoryChart";
+import { CollapsibleCard } from "./components/CollapsibleCard";
 import { ComparisonMovers } from "./components/ComparisonMovers";
 import { CategoryDetailsPanel, type CategoryDetail } from "./components/CategoryDetailsPanel";
 import { ForecastCard, type ForecastRow } from "./components/ForecastCard";
@@ -496,28 +497,35 @@ export default function App() {
               onDuplicate={handleDuplicate}
               onViewAll={() => setAllEntriesOpen(true)}
             />
-            <BudgetPanel
-              categories={store.categories}
-              budgets={store.budgets}
-              monthSpentByCategory={monthData.byCategory}
-              monthTotal={monthData.total}
-              baseCurrency={settings.baseCurrency}
-              monthLabel={formatPeriodLabel("month", refDate, locale)}
-              onSetBudget={store.setBudget}
-              onRemoveBudget={store.removeBudget}
-            />
-            <RecurringPanel
-              categories={store.categories}
-              incomeCategories={store.incomeCategories}
-              recurring={store.recurring}
-              defaultCurrency={settings.baseCurrency}
-              calendar={holidays.calendar}
-              knownYears={holidays.knownYears}
-              holidayCountry={settings.holidayCountry}
-              onAdd={store.addRecurring}
-              onUpdate={store.updateRecurring}
-              onDelete={store.deleteRecurring}
-            />
+            <CollapsibleCard
+              title={t("budget.title", { month: formatPeriodLabel("month", refDate, locale) })}
+              defaultCollapsed
+            >
+              <BudgetPanel
+                categories={store.categories}
+                budgets={store.budgets}
+                monthSpentByCategory={monthData.byCategory}
+                monthTotal={monthData.total}
+                baseCurrency={settings.baseCurrency}
+                monthLabel={formatPeriodLabel("month", refDate, locale)}
+                onSetBudget={store.setBudget}
+                onRemoveBudget={store.removeBudget}
+              />
+            </CollapsibleCard>
+            <CollapsibleCard title={t("recurring.title")} defaultCollapsed>
+              <RecurringPanel
+                categories={store.categories}
+                incomeCategories={store.incomeCategories}
+                recurring={store.recurring}
+                defaultCurrency={settings.baseCurrency}
+                calendar={holidays.calendar}
+                knownYears={holidays.knownYears}
+                holidayCountry={settings.holidayCountry}
+                onAdd={store.addRecurring}
+                onUpdate={store.updateRecurring}
+                onDelete={store.deleteRecurring}
+              />
+            </CollapsibleCard>
           </div>
 
           <div className={styles.col}>
@@ -532,28 +540,41 @@ export default function App() {
               baseCurrency={settings.baseCurrency}
               onSelectCategory={setDrillCategoryId}
             />
-            <ComparisonMovers
-              movers={comparison.hasPrev ? comparison.movers : []}
-              categoryById={store.categoryById}
-              baseCurrency={settings.baseCurrency}
-            />
-            <ForecastCard rows={forecast} baseCurrency={settings.baseCurrency} />
-            <DayTypeAnalytics
-              onViewDetails={() => setDayTypeOpen(true)}
-              breakdown={dayTypeBreakdown}
-              baseCurrency={settings.baseCurrency}
-            />
-            <MonthGrades
-              spending={spendingGrade}
-              savings={savingsGrade}
-              monthTotal={monthData.total}
-              baseCurrency={settings.baseCurrency}
-              monthLabel={formatPeriodLabel("month", refDate, locale)}
-            />
+            <CollapsibleCard title={t("compare.title")} defaultCollapsed>
+              <ComparisonMovers
+                movers={comparison.hasPrev ? comparison.movers : []}
+                categoryById={store.categoryById}
+                baseCurrency={settings.baseCurrency}
+              />
+            </CollapsibleCard>
+            <CollapsibleCard title={t("forecast.title")} defaultCollapsed>
+              <ForecastCard rows={forecast} baseCurrency={settings.baseCurrency} />
+            </CollapsibleCard>
+            <CollapsibleCard title={t("dayType.title")} defaultCollapsed>
+              <DayTypeAnalytics
+                onViewDetails={() => setDayTypeOpen(true)}
+                breakdown={dayTypeBreakdown}
+                baseCurrency={settings.baseCurrency}
+              />
+            </CollapsibleCard>
+            <CollapsibleCard
+              title={t("grades.title", { month: formatPeriodLabel("month", refDate, locale) })}
+              defaultCollapsed
+            >
+              <MonthGrades
+                spending={spendingGrade}
+                savings={savingsGrade}
+                monthTotal={monthData.total}
+                baseCurrency={settings.baseCurrency}
+                monthLabel={formatPeriodLabel("month", refDate, locale)}
+              />
+            </CollapsibleCard>
           </div>
         </div>
 
-        <SpendingHeatmap grid={heatmapGrid} baseCurrency={settings.baseCurrency} />
+        <CollapsibleCard title={t("heatmap.title")} defaultCollapsed>
+          <SpendingHeatmap grid={heatmapGrid} baseCurrency={settings.baseCurrency} />
+        </CollapsibleCard>
       </main>
 
       {settingsOpen && (
