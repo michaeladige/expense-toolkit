@@ -142,7 +142,7 @@ export const jv: TranslationDict = {
     "grades.spendingPending":
       "Durung ana sing bisa dibiji. Set budget Total ing ngisor, utawa cathet sesasi kebak dhisik.",
     "grades.savingsPending":
-      "Durung ana pemasukan, dadi ora ana sing dibiji. Bener'na dhisik.",
+      "Durung ana pemasukan, dadi ora ana sing dibiji. Bener'na dhisik, bos.",
     "grades.ofBudget": ({ total, target, pct }) =>
       `${total} saka ${target} (${pct}%)`,
     "grades.ofAverage": ({ total, target, pct }) =>
@@ -154,18 +154,18 @@ export const jv: TranslationDict = {
 
     // Grade tier labels (spending: lower is better)
     "grade.spending.S": "Meh ora jajan babar blas. Aja gemedhe. 🧎",
-    "grade.spending.A": "Ketat sasi iki. Baleni, aja kendho.",
-    "grade.spending.B": "'Aman' kuwi dudu prestasi. Perketet maneh.",
-    "grade.spending.C": "Amburadul — lan kowe ngerti tuku apa biange.",
-    "grade.spending.D": "Iki masalah, lan masalahe ya kowe.",
-    "grade.spending.F": "Delehna kartune, ngadoh. Saiki.",
+    "grade.spending.A": "Lumayan ketat. Baleni, aja kendho edan.",
+    "grade.spending.B": "Ngono thok? 'Aman' kuwi dudu flex — perketet.",
+    "grade.spending.C": "Amburadul, lan kowe ngerti parah tuku apa biange.",
+    "grade.spending.D": "Bro. Iki masalah, lan masalahe ya kowe.",
+    "grade.spending.F": "Kowe tekor parah. Stop belanja, tenanan.",
     // Grade tier labels (savings: higher is better)
-    "grade.savings.S": "Numpuk banter. Aja wani kendho. 🐉",
-    "grade.savings.A": "Tenanan nabung. Buktekna dudu kebeneran.",
-    "grade.savings.B": "Bantal dana tipis. Tipis ora nulungi.",
+    "grade.savings.S": "Numpuk kaya naga. Aja wani kendho. 🐉",
+    "grade.savings.A": "Tenanan nabung?? Buktekna dudu hoki.",
+    "grade.savings.B": "Bantal dana tipis. Ora bakal nyelametke kowe.",
     "grade.savings.C": "Impas kuwi mung kalah alon-alon.",
-    "grade.savings.D": "Ngentekke dhuwit sing ora kok duweni. Mandheg.",
-    "grade.savings.F": "Tabunganmu lagi diobong. Mandhega. 🔥",
+    "grade.savings.D": "Kowe ngentekke dhuwit sing ora kok duweni. Mandheg!",
+    "grade.savings.F": "Tabunganmu kobong, kowe nyekel koreke. Mandhega. 🔥",
 
     // Budgets
     "budget.title": ({ month }) => `Budget · ${month}`,
@@ -241,8 +241,8 @@ export const jv: TranslationDict = {
     "period.weekly": "mingguan",
     "period.monthly": "sasenan",
     "toast.single": ({ period, label, net }) =>
-      `Rapor ${period}mu kanggo ${label} wis metu: sisa ${net}. Ora bisa mlayu.`,
-    "toast.multiple": ({ n }) => `${n} rapor anyar. Wektune ngadhepi angkane.`,
+      `Rapor ${period}mu kanggo ${label} metu: sisa ${net}. Ora bisa mlayu.`,
+    "toast.multiple": ({ n }) => `${n} rapor anyar. Wektune ngadhepi karusakane.`,
     "toast.view": "Deloki",
     "toast.dismiss": "Skip",
 
@@ -466,9 +466,9 @@ export const jv: TranslationDict = {
         `Kowe condhong boros pas ${top}. Wani tenan duwe dina favorit kanggo ngentekke duit.`,
     ],
     adviceSingle:
-      "Cathet pirang dina maneh ben kita bisa nyindhir kowe kanthi bener.",
+      "Cathet pirang dina maneh ben kita bisa nyindhir kowe tenan.",
     adviceDominant: ({ top, ratio }) =>
-      `Dina ${top}mu ${ratio}× saka sisane. Gawe "budget seneng²" sing tegas lan tuhoni tenan.`,
+      `Dina ${top}mu ${ratio}× saka sisane. Gawe "budget seneng²" lan tuhoni, sepisan iki wae.`,
     adviceBalanced:
       "Bocor rata nang ngendi-endi. Siji budget sasenan plus nahan dhiri bakal nulungi.",
     quipDayoff: [

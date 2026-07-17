@@ -143,7 +143,7 @@ export const id: TranslationDict = {
     "grades.spendingPending":
       "Belum ada yang bisa dinilai. Set budget Total di bawah, atau catat sebulan penuh dulu.",
     "grades.savingsPending":
-      "Belum ada pemasukan, jadi nggak ada yang dinilai. Benerin dulu.",
+      "Belum ada pemasukan, jadi nggak ada yang dinilai. Benerin dulu, bos.",
     "grades.ofBudget": ({ total, target, pct }) =>
       `${total} dari ${target} (${pct}%)`,
     "grades.ofAverage": ({ total, target, pct }) =>
@@ -154,19 +154,19 @@ export const id: TranslationDict = {
       `Nyisa ${net} dari ${income} yang lu dapet (${pct}%)`,
 
     // Grade tier labels (spending: lower is better)
-    "grade.spending.S": "Nyaris nggak jajan. Jangan sombong ya. 🧎",
-    "grade.spending.A": "Ketat bulan ini. Ulangi, jangan kendor.",
-    "grade.spending.B": "'Aman' bukan prestasi. Perketat lagi.",
-    "grade.spending.C": "Berantakan — dan lu tau belanjaan mana biangnya.",
-    "grade.spending.D": "Ini masalah, dan masalahnya ya lu.",
-    "grade.spending.F": "Taruh kartunya, menjauh. Sekarang.",
+    "grade.spending.S": "Ampir nggak jajan sama sekali. Jangan sombong lu. 🧎",
+    "grade.spending.A": "Lumayan ketat. Ulangin, jangan kendor anjir.",
+    "grade.spending.B": "Gitu doang? 'Aman' bukan flex — perketat.",
+    "grade.spending.C": "Berantakan, dan lu tau parah belanjaan mana biangnya.",
+    "grade.spending.D": "Bro. Ini masalah, dan masalahnya lu.",
+    "grade.spending.F": "Lu tekor parah. Stop belanja, serius.",
     // Grade tier labels (savings: higher is better)
-    "grade.savings.S": "Nimbun keras. Jangan berani kendor. 🐉",
-    "grade.savings.A": "Beneran nabung. Buktiin bukan kebetulan.",
-    "grade.savings.B": "Bantal dana tipis. Tipis nggak nolong.",
-    "grade.savings.C": "Impas itu cuma kalah pelan-pelan.",
-    "grade.savings.D": "Ngabisin duit yang lu nggak punya. Stop.",
-    "grade.savings.F": "Tabungan lu lagi dibakar. Hentikan. 🔥",
+    "grade.savings.S": "Nimbun kayak naga. Jangan berani kendor. 🐉",
+    "grade.savings.A": "Beneran nabung?? Buktiin bukan hoki.",
+    "grade.savings.B": "Bantal dana tipis. Nggak bakal nyelametin lu.",
+    "grade.savings.C": "Impas itu cuma kalah pelan-pelan doang.",
+    "grade.savings.D": "Lu ngabisin duit yang lu nggak punya. Stop!",
+    "grade.savings.F": "Tabungan lu kebakar, lu megang koreknya. Hentikan. 🔥",
 
     // Budgets
     "budget.title": ({ month }) => `Budget · ${month}`,
@@ -242,8 +242,8 @@ export const id: TranslationDict = {
     "period.weekly": "mingguan",
     "period.monthly": "bulanan",
     "toast.single": ({ period, label, net }) =>
-      `Rapor ${period} lu buat ${label} udah nongol: sisa ${net}. Nggak bisa kabur.`,
-    "toast.multiple": ({ n }) => `${n} rapor baru. Saatnya hadapi angkanya.`,
+      `Rapor ${period} lu buat ${label} nongol: sisa ${net}. Nggak bisa kabur.`,
+    "toast.multiple": ({ n }) => `${n} rapor baru. Saatnya hadapi kerusakannya.`,
     "toast.view": "Liat",
     "toast.dismiss": "Skip",
 
@@ -467,9 +467,9 @@ export const id: TranslationDict = {
         `Lu condong boros pas ${top}. Berani banget punya hari favorit buat ngeboncosin duit.`,
     ],
     adviceSingle:
-      "Catat beberapa hari lagi biar kita bisa nyindir lu dengan bener.",
+      "Catat beberapa hari lagi biar kita bisa nyindir lu beneran.",
     adviceDominant: ({ top, ratio }) =>
-      `Hari ${top} lu ${ratio}× dari sisanya. Bikin "budget senang²" yang tegas dan patuhi beneran.`,
+      `Hari ${top} lu ${ratio}× dari sisanya. Bikin "budget senang²" dan patuhi, sekali ini aja.`,
     adviceBalanced:
       "Bocor rata di mana-mana. Satu budget bulanan plus nahan diri bakal ngebantu.",
     quipDayoff: [
