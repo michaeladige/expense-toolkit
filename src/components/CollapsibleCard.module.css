@@ -11,7 +11,16 @@
   /* Mobile: the wrapper becomes the card, and owns the header + collapse. */
   .wrap {
     display: block;
-    background: var(--surface);
+    /* Match the .card pattern treatment — the inner card is flattened, so this
+       wrapper is the visible card on mobile. */
+    --pattern-ink: color-mix(
+      in srgb,
+      var(--accent) var(--pattern-tint-card),
+      transparent
+    );
+    background-color: var(--surface);
+    background-image: var(--pattern-image, none);
+    background-size: var(--pattern-size, auto);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
