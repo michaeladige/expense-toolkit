@@ -441,29 +441,29 @@ export const en: TranslationDict = {
     noun: { workday: "workdays", dayoff: "days off" },
     single: {
       workday: [
-        "Every dollar lands on a workday. Your idea of a wild weekend is closing all the browser tabs.",
-        "100% workday spending. Saturdays and Sundays cost you literally nothing — deeply suspicious.",
+        "Every dollar lands on a workday. Your idea of a wild weekend is closing browser tabs.",
+        "100% workday spending. Weekends cost you nothing — who are you and where's your money going?",
       ],
       dayoff: [
-        "All your spending happens on days off. Work is just where you recover from your wallet.",
-        "Every expense is a day-off expense. Monday to Friday your card is basically in a coma.",
+        "All your damage happens on days off. Work is just where you recover from your own wallet.",
+        "Every expense is a day-off expense. Mon–Fri your bank account plays dead.",
       ],
     },
     even: [
-      "Workdays and days off cost you almost exactly the same — your wallet genuinely cannot read a calendar.",
-      "Neck and neck. Working or free, the money escapes at the same heroic speed.",
+      "Workdays and days off cost the exact same — your wallet genuinely can't read a calendar.",
+      "Dead even. Working or free, the money bounces at the same speed. Impressive, in a bad way.",
     ],
     dominant: [
       ({ top, other, ratio }) =>
-        `On ${top} your day-rate is ${ratio}× your ${other}. The other days are just savings in a trench coat.`,
+        `On ${top} your day-rate is ${ratio}× your ${other}. Those other days are just savings in a trench coat.`,
       ({ top, other, ratio }) =>
-        `${top} cost ${ratio}× what ${other} do. That's not a spending pattern, that's a whole personality.`,
+        `${top} cost ${ratio}× what ${other} do. That's not a spending pattern, that's a cry for help.`,
     ],
     lean: [
       ({ top, other }) =>
-        `${top} edge out ${other} as your pricier day type. The calendar has learned your weaknesses.`,
+        `${top} edge out ${other} as your pricier day. The calendar has your number and it's laughing.`,
       ({ top }) =>
-        `You lean toward spending on ${top}. Bold of you to have a favorite kind of day to hemorrhage money.`,
+        `You lean hard into spending on ${top}. Bold to have a favorite day to torch your cash.`,
     ],
     adviceSingle:
       "Log a few more days so we can actually roast your habits.",
@@ -472,10 +472,10 @@ export const en: TranslationDict = {
     adviceBalanced:
       "Evenly leaky everywhere. One monthly budget and a bit of self-control would sort it.",
     quipDayoff: [
-      ({ name }) => `${name} is your signature day-off splurge. No notes.`,
+      ({ name }) => `${name} is your signature day-off splurge. Zero self-control, honestly.`,
       ({ name }) =>
-        `On your days off, ${name} does the most damage — and it knows it.`,
+        `On your days off, ${name} does the most damage — and it knows damn well you'll let it.`,
     ],
-    quipWorkday: ({ name }) => `${name} is where your workdays quietly leak money.`,
+    quipWorkday: ({ name }) => `${name} is where your workdays quietly bleed cash.`,
   },
 };

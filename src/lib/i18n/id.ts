@@ -442,29 +442,29 @@ export const id: TranslationDict = {
     noun: { workday: "hari kerja", dayoff: "hari gabut" },
     single: {
       workday: [
-        "Semua duit kabur pas hari kerja. Weekend lu paling liar cuma nutup semua tab browser.",
-        "100% boncos hari kerja. Sabtu Minggu gak keluar sepeser pun — mencurigakan banget.",
+        "Semua duit kabur pas hari kerja. Weekend lu paling liar cuma nutup tab browser.",
+        "100% boncos hari kerja. Sabtu Minggu gak keluar sepeser pun — lu ini siapa sih?",
       ],
       dayoff: [
-        "Semua boncos lu pas hari gabut. Kerja tuh cuma tempat pemulihan dompet.",
-        "Tiap boncos itu boncos hari libur. Senin-Jumat kartu lu koma.",
+        "Semua kerusakan lu pas hari gabut. Kerja tuh cuma tempat pemulihan dompet.",
+        "Tiap boncos itu boncos hari libur. Senin–Jumat rekening lu pura-pura mati.",
       ],
     },
     even: [
-      "Hari kerja sama hari gabut boncosnya mirip banget — dompet lu emang gak bisa baca kalender.",
-      "Ketat-ketatan. Kerja atau libur, duit kabur secepat kilat.",
+      "Hari kerja sama hari gabut boncosnya sama persis — dompet lu emang gak bisa baca kalender.",
+      "Imbang parah. Kerja atau libur, duit mental secepat kilat. Keren, tapi keren yang salah.",
     ],
     dominant: [
       ({ top, other, ratio }) =>
         `Pas ${top}, boncos harian lu ${ratio}× ${other}. Hari lainnya mah tabungan nyamar doang.`,
       ({ top, other, ratio }) =>
-        `${top} makan ${ratio}× lipat dari ${other}. Itu mah bukan pola belanja, itu kepribadian.`,
+        `${top} makan ${ratio}× lipat dari ${other}. Itu bukan pola belanja, itu jeritan minta tolong.`,
     ],
     lean: [
       ({ top, other }) =>
-        `${top} sedikit ngalahin ${other} jadi hari termahal lu. Kalender udah hafal kelemahan lu.`,
+        `${top} dikit ngalahin ${other} jadi hari termahal lu. Kalender udah hafal kelemahan lu, ketawa dia.`,
       ({ top }) =>
-        `Lu condong boros pas ${top}. Berani banget punya hari favorit buat ngeboncosin duit.`,
+        `Lu condong boros parah pas ${top}. Berani banget punya hari favorit buat ngebakar duit.`,
     ],
     adviceSingle:
       "Catat beberapa hari lagi biar kita bisa nyindir lu beneran.",
@@ -473,9 +473,9 @@ export const id: TranslationDict = {
     adviceBalanced:
       "Bocor rata di mana-mana. Satu budget bulanan plus nahan diri bakal ngebantu.",
     quipDayoff: [
-      ({ name }) => `${name} itu boncos hari gabut andalan lu. No notes.`,
+      ({ name }) => `${name} itu boncos hari gabut andalan lu. Zero kontrol diri, jujur.`,
       ({ name }) =>
-        `Pas hari gabut, ${name} yang paling bikin boncos — dan dia sadar itu.`,
+        `Pas hari gabut, ${name} yang paling bikin boncos — dan dia tau lu bakal ngebiarin.`,
     ],
     quipWorkday: ({ name }) => `${name} tempat duit hari kerja lu bocor diam-diam.`,
   },

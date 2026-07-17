@@ -441,29 +441,29 @@ export const jv: TranslationDict = {
     noun: { workday: "dina kerja", dayoff: "dina nganggur" },
     single: {
       workday: [
-        "Kabeh duit minggat pas dina kerja. Weekendmu paling liar mung nutup kabeh tab browser.",
-        "100% boncos dina kerja. Setu Minggu ora metu sepeser — mencurigakke tenan.",
+        "Kabeh duit minggat pas dina kerja. Weekendmu paling liar mung nutup tab browser.",
+        "100% boncos dina kerja. Setu Minggu ora metu sepeser — kowe iki sapa ta?",
       ],
       dayoff: [
-        "Kabeh boncosmu pas dina nganggur. Kerja kuwi mung panggonan pemulihan dompet.",
-        "Saben boncos kuwi boncos dina libur. Senin-Jumat kartumu koma.",
+        "Kabeh karusakanmu pas dina nganggur. Kerja kuwi mung panggonan pemulihan dompet.",
+        "Saben boncos kuwi boncos dina libur. Senin–Jumat rekeningmu pura-pura mati.",
       ],
     },
     even: [
-      "Dina kerja lan dina nganggur boncose meh padha — dompetmu pancen ora iso maca kalender.",
-      "Kejar-kejaran. Kerja utawa libur, duit minggat cepet kaya kilat.",
+      "Dina kerja lan dina nganggur boncose padha persis — dompetmu pancen ora iso maca kalender.",
+      "Imbang parah. Kerja utawa libur, duit mantul cepet kaya kilat. Keren, ning keren sing salah.",
     ],
     dominant: [
       ({ top, other, ratio }) =>
         `Pas ${top}, boncos harianmu ${ratio}× ${other}. Dina liyane mung tabungan sing nyamar.`,
       ({ top, other, ratio }) =>
-        `${top} mangan ${ratio}× tinimbang ${other}. Kuwi dudu pola blanja, kuwi kepribadian.`,
+        `${top} mangan ${ratio}× tinimbang ${other}. Kuwi dudu pola blanja, kuwi jerit njaluk tulung.`,
     ],
     lean: [
       ({ top, other }) =>
-        `${top} rada ngalahke ${other} dadi dina termahalmu. Kalender wis apal kelemahanmu.`,
+        `${top} rada ngalahke ${other} dadi dina termahalmu. Kalender wis apal kelemahanmu, ngguyu dheweke.`,
       ({ top }) =>
-        `Kowe condhong boros pas ${top}. Wani tenan duwe dina favorit kanggo ngentekke duit.`,
+        `Kowe condhong boros parah pas ${top}. Wani tenan duwe dina favorit kanggo ngobong duit.`,
     ],
     adviceSingle:
       "Cathet pirang dina maneh ben kita bisa nyindhir kowe tenan.",
@@ -472,9 +472,9 @@ export const jv: TranslationDict = {
     adviceBalanced:
       "Bocor rata nang ngendi-endi. Siji budget sasenan plus nahan dhiri bakal nulungi.",
     quipDayoff: [
-      ({ name }) => `${name} kuwi boncos dina nganggur andhalanmu. No notes.`,
+      ({ name }) => `${name} kuwi boncos dina nganggur andhalanmu. Zero kontrol dhiri, jujur.`,
       ({ name }) =>
-        `Pas dina nganggur, ${name} sing paling gawe boncos — lan dheweke ngerti kuwi.`,
+        `Pas dina nganggur, ${name} sing paling gawe boncos — lan dheweke ngerti kowe bakal ngejarke.`,
     ],
     quipWorkday: ({ name }) => `${name} panggonan duit dina kerjamu bocor meneng-meneng.`,
   },
