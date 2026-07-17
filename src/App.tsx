@@ -496,6 +496,28 @@ export default function App() {
               onDuplicate={handleDuplicate}
               onViewAll={() => setAllEntriesOpen(true)}
             />
+            <BudgetPanel
+              categories={store.categories}
+              budgets={store.budgets}
+              monthSpentByCategory={monthData.byCategory}
+              monthTotal={monthData.total}
+              baseCurrency={settings.baseCurrency}
+              monthLabel={formatPeriodLabel("month", refDate, locale)}
+              onSetBudget={store.setBudget}
+              onRemoveBudget={store.removeBudget}
+            />
+            <RecurringPanel
+              categories={store.categories}
+              incomeCategories={store.incomeCategories}
+              recurring={store.recurring}
+              defaultCurrency={settings.baseCurrency}
+              calendar={holidays.calendar}
+              knownYears={holidays.knownYears}
+              holidayCountry={settings.holidayCountry}
+              onAdd={store.addRecurring}
+              onUpdate={store.updateRecurring}
+              onDelete={store.deleteRecurring}
+            />
           </div>
 
           <div className={styles.col}>
@@ -527,28 +549,6 @@ export default function App() {
               monthTotal={monthData.total}
               baseCurrency={settings.baseCurrency}
               monthLabel={formatPeriodLabel("month", refDate, locale)}
-            />
-            <BudgetPanel
-              categories={store.categories}
-              budgets={store.budgets}
-              monthSpentByCategory={monthData.byCategory}
-              monthTotal={monthData.total}
-              baseCurrency={settings.baseCurrency}
-              monthLabel={formatPeriodLabel("month", refDate, locale)}
-              onSetBudget={store.setBudget}
-              onRemoveBudget={store.removeBudget}
-            />
-            <RecurringPanel
-              categories={store.categories}
-              incomeCategories={store.incomeCategories}
-              recurring={store.recurring}
-              defaultCurrency={settings.baseCurrency}
-              calendar={holidays.calendar}
-              knownYears={holidays.knownYears}
-              holidayCountry={settings.holidayCountry}
-              onAdd={store.addRecurring}
-              onUpdate={store.updateRecurring}
-              onDelete={store.deleteRecurring}
             />
           </div>
         </div>
