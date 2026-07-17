@@ -410,6 +410,15 @@ export const jv: TranslationDict = {
     "heatmap.aria": "Peta panas kalender belanja saben dina",
     "heatmap.less": "Sithik",
     "heatmap.more": "Akeh",
+
+    // Mobile nav / menu
+    "menu.open": "Menu",
+    "menu.jumpTo": "Lompat menyang",
+    "menu.expandAll": "Bukak kabeh",
+    "menu.collapseAll": "Tutup kabeh",
+    "menu.transactions": "Transaksi",
+    "menu.budgets": "Anggaran",
+    "menu.grades": "Biji",
   },
 
   defaultCategoryNames: {

@@ -410,6 +410,15 @@ export const en: TranslationDict = {
     "heatmap.aria": "Calendar heatmap of daily spending",
     "heatmap.less": "Less",
     "heatmap.more": "More",
+
+    // Mobile nav / menu
+    "menu.open": "Menu",
+    "menu.jumpTo": "Jump to",
+    "menu.expandAll": "Expand all",
+    "menu.collapseAll": "Collapse all",
+    "menu.transactions": "Transactions",
+    "menu.budgets": "Budgets",
+    "menu.grades": "Grades",
   },
 
   defaultCategoryNames: {

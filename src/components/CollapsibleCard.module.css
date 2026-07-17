@@ -1,0 +1,72 @@
+/* Desktop: the wrapper is invisible — the inner .card renders exactly as if it
+   were never wrapped, so there is no desktop cost to marking a panel collapsible. */
+.wrap {
+  display: contents;
+}
+.header {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  /* Mobile: the wrapper becomes the card, and owns the header + collapse. */
+  .wrap {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    scroll-margin-top: 5rem;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+  }
+  .title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .chevron {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+  }
+  .collapsed .chevron {
+    transform: rotate(-90deg);
+  }
+
+  .body {
+    padding: 0 1.25rem 1.25rem;
+  }
+  .collapsed .body {
+    display: none;
+  }
+
+  /* Flatten the inner card so it reads as this wrapper's body, not a nested box. */
+  .wrap :global(.card) {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+  }
+  /* Hide the inner card's own heading — a bare <h2>, or a header row that
+     leads with one — so the title isn't shown twice. */
+  .body :global(.card) > h2,
+  .body :global(.card) > :first-child:has(> h2) {
+    display: none;
+  }
+}

@@ -42,6 +42,29 @@
   flex-wrap: wrap;
 }
 
+/* On desktop the Reports/Settings buttons sit inline; the mobile hamburger +
+   collapse-all control is hidden. Swapped below the mobile breakpoint. */
+.desktopActions {
+  display: contents;
+}
+.mobileNav {
+  display: none;
+  align-items: center;
+  gap: 0.6rem;
+}
+.collapseGlyph {
+  display: inline-block;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease;
+}
+
+/* Wrapper giving non-collapsible sections a jump-to target that clears the
+   sticky topbar. */
+.anchor {
+  scroll-margin-top: 5rem;
+  min-width: 0;
+}
+
 .main {
   max-width: 1100px;
   margin: 0 auto;
@@ -71,6 +94,12 @@
 @media (max-width: 860px) {
   .columns {
     grid-template-columns: 1fr;
+  }
+  .desktopActions {
+    display: none;
+  }
+  .mobileNav {
+    display: inline-flex;
   }
 }
 
