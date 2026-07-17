@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from "react";
+import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { CollapseControlContext } from "./collapseControl";
 import styles from "./CollapsibleCard.module.css";
 
 interface Props {
@@ -6,6 +7,8 @@ interface Props {
   title: string;
   /** Collapsed on first render — only takes effect on mobile. */
   defaultCollapsed?: boolean;
+  /** DOM id for jump-to navigation from the mobile menu. */
+  anchorId?: string;
   children: ReactNode;
 }
 
@@ -16,11 +19,30 @@ interface Props {
  * CSS), so there's a single card with one title. On desktop the wrapper is
  * `display: contents` — it vanishes and the inner card renders exactly as it
  * would unwrapped, so this is a mobile-only affordance with no desktop cost.
+ *
+ * It also listens to `CollapseControlContext` so the topbar's collapse/expand-all
+ * button and the menu's jump-to shortcuts can drive it, while the header button
+ * still toggles it individually.
  */
-export function CollapsibleCard({ title, defaultCollapsed = false, children }: Props) {
+export function CollapsibleCard({
+  title,
+  defaultCollapsed = false,
+  anchorId,
+  children,
+}: Props) {
+  const cmd = useContext(CollapseControlContext);
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const seen = useRef(cmd.n);
+
+  useEffect(() => {
+    if (cmd.n === seen.current) return; // initial mount, or already applied
+    seen.current = cmd.n;
+    if (cmd.targetId && cmd.targetId !== anchorId) return; // aimed at another card
+    setCollapsed(cmd.collapsed);
+  }, [cmd, anchorId]);
+
   return (
-    <div className={`${styles.wrap} ${collapsed ? styles.collapsed : ""}`}>
+    <div id={anchorId} className={`${styles.wrap} ${collapsed ? styles.collapsed : ""}`}>
       <button
         type="button"
         className={styles.header}

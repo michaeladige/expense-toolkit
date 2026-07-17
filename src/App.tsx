@@ -38,6 +38,8 @@ import { AllEntriesPanel } from "./components/AllEntriesPanel";
 import { SummaryCards } from "./components/SummaryCards";
 import { CategoryChart } from "./components/CategoryChart";
 import { CollapsibleCard } from "./components/CollapsibleCard";
+import { CollapseControlContext, type CollapseCommand } from "./components/collapseControl";
+import { MobileMenu, type MenuShortcut } from "./components/MobileMenu";
 import { ComparisonMovers } from "./components/ComparisonMovers";
 import { CategoryDetailsPanel, type CategoryDetail } from "./components/CategoryDetailsPanel";
 import { ForecastCard, type ForecastRow } from "./components/ForecastCard";
@@ -84,6 +86,29 @@ export default function App() {
   const [allEntriesOpen, setAllEntriesOpen] = useState(false);
   const [dayTypeOpen, setDayTypeOpen] = useState(false);
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
+  // Drives every CollapsibleCard from the mobile topbar / menu. `allExpanded`
+  // tracks the last "all" broadcast so the button can flip its label.
+  const [collapseCmd, setCollapseCmd] = useState<CollapseCommand>({
+    n: 0,
+    collapsed: true,
+  });
+  const [allExpanded, setAllExpanded] = useState(false);
+
+  const toggleAll = () => {
+    setCollapseCmd((c) => ({ n: c.n + 1, collapsed: allExpanded }));
+    setAllExpanded((v) => !v);
+  };
+
+  // Open a section (expanding it if collapsible) and scroll it into view. The
+  // targeted command is a no-op for non-collapsible anchors, which just scroll.
+  const openSection = (id: string) => {
+    setCollapseCmd((c) => ({ n: c.n + 1, collapsed: false, targetId: id }));
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+      )
+    );
+  };
 
   const { fresh, dismissFresh } = useAutoReports({
     expenses: store.expenses,
@@ -427,8 +452,22 @@ export default function App() {
 
   const pill = RATE_PILL[status];
 
+  const shortcuts: MenuShortcut[] = [
+    { id: "sec-add", label: t("entryForm.addExpense") },
+    { id: "sec-tx", label: t("menu.transactions") },
+    { id: "sec-trend", label: t("trend.title") },
+    { id: "sec-compare", label: t("compare.title") },
+    { id: "sec-forecast", label: t("forecast.title") },
+    { id: "sec-daytype", label: t("dayType.title") },
+    { id: "sec-grades", label: t("menu.grades") },
+    { id: "sec-budgets", label: t("menu.budgets") },
+    { id: "sec-recurring", label: t("recurring.title") },
+    { id: "sec-heatmap", label: t("heatmap.title") },
+  ];
+
   return (
     <I18nProvider lang={lang}>
+    <CollapseControlContext.Provider value={collapseCmd}>
     <div className={styles.app}>
       <header className={styles.topbar}>
         <div className={styles.brand}>
@@ -447,13 +486,39 @@ export default function App() {
             <span className="dot" />
             {t(pill.key)}
           </button>
-          <button className="btn" onClick={() => setReportsOpen(true)}>
-            {t("app.reports")}
-            {store.reports.length > 0 && ` (${store.reports.length})`}
-          </button>
-          <button className="btn" onClick={() => setSettingsOpen(true)}>
-            {t("app.settings")}
-          </button>
+          <span className={styles.desktopActions}>
+            <button className="btn" onClick={() => setReportsOpen(true)}>
+              {t("app.reports")}
+              {store.reports.length > 0 && ` (${store.reports.length})`}
+            </button>
+            <button className="btn" onClick={() => setSettingsOpen(true)}>
+              {t("app.settings")}
+            </button>
+          </span>
+          <span className={styles.mobileNav}>
+            <button
+              type="button"
+              className="btn btn-icon"
+              aria-label={allExpanded ? t("menu.collapseAll") : t("menu.expandAll")}
+              title={allExpanded ? t("menu.collapseAll") : t("menu.expandAll")}
+              onClick={toggleAll}
+            >
+              <span
+                className={styles.collapseGlyph}
+                style={{ transform: allExpanded ? "rotate(180deg)" : "none" }}
+                aria-hidden
+              >
+                ▾
+              </span>
+            </button>
+            <MobileMenu
+              shortcuts={shortcuts}
+              onJump={openSection}
+              onReports={() => setReportsOpen(true)}
+              onSettings={() => setSettingsOpen(true)}
+              reportCount={store.reports.length}
+            />
+          </span>
         </div>
       </header>
 
@@ -477,27 +542,32 @@ export default function App() {
 
         <div className={styles.columns}>
           <div className={styles.col}>
-            <EntryForm
-              categories={store.categories}
-              incomeCategories={store.incomeCategories}
-              defaultCurrency={settings.baseCurrency}
-              editing={editing}
-              favorites={favorites}
-              onSubmit={handleSubmit}
-              onCancelEdit={() => setEditing(null)}
-            />
-            <EntryList
-              entries={periodEntries}
-              categoryById={store.categoryById}
-              incomeCategoryById={store.incomeCategoryById}
-              baseCurrency={settings.baseCurrency}
-              rates={rates}
-              onEdit={setEditing}
-              onDelete={handleDelete}
-              onDuplicate={handleDuplicate}
-              onViewAll={() => setAllEntriesOpen(true)}
-            />
+            <div id="sec-add" className={styles.anchor}>
+              <EntryForm
+                categories={store.categories}
+                incomeCategories={store.incomeCategories}
+                defaultCurrency={settings.baseCurrency}
+                editing={editing}
+                favorites={favorites}
+                onSubmit={handleSubmit}
+                onCancelEdit={() => setEditing(null)}
+              />
+            </div>
+            <div id="sec-tx" className={styles.anchor}>
+              <EntryList
+                entries={periodEntries}
+                categoryById={store.categoryById}
+                incomeCategoryById={store.incomeCategoryById}
+                baseCurrency={settings.baseCurrency}
+                rates={rates}
+                onEdit={setEditing}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
+                onViewAll={() => setAllEntriesOpen(true)}
+              />
+            </div>
             <CollapsibleCard
+              anchorId="sec-budgets"
               title={t("budget.title", { month: formatPeriodLabel("month", refDate, locale) })}
               defaultCollapsed
             >
@@ -512,7 +582,7 @@ export default function App() {
                 onRemoveBudget={store.removeBudget}
               />
             </CollapsibleCard>
-            <CollapsibleCard title={t("recurring.title")} defaultCollapsed>
+            <CollapsibleCard anchorId="sec-recurring" title={t("recurring.title")} defaultCollapsed>
               <RecurringPanel
                 categories={store.categories}
                 incomeCategories={store.incomeCategories}
@@ -529,28 +599,30 @@ export default function App() {
           </div>
 
           <div className={styles.col}>
-            <TrendChart
-              buckets={trendBuckets}
-              categories={store.categories}
-              baseCurrency={settings.baseCurrency}
-              periodLabel={period}
-            />
+            <div id="sec-trend" className={styles.anchor}>
+              <TrendChart
+                buckets={trendBuckets}
+                categories={store.categories}
+                baseCurrency={settings.baseCurrency}
+                periodLabel={period}
+              />
+            </div>
             <CategoryChart
               data={categorySlices}
               baseCurrency={settings.baseCurrency}
               onSelectCategory={setDrillCategoryId}
             />
-            <CollapsibleCard title={t("compare.title")} defaultCollapsed>
+            <CollapsibleCard anchorId="sec-compare" title={t("compare.title")} defaultCollapsed>
               <ComparisonMovers
                 movers={comparison.hasPrev ? comparison.movers : []}
                 categoryById={store.categoryById}
                 baseCurrency={settings.baseCurrency}
               />
             </CollapsibleCard>
-            <CollapsibleCard title={t("forecast.title")} defaultCollapsed>
+            <CollapsibleCard anchorId="sec-forecast" title={t("forecast.title")} defaultCollapsed>
               <ForecastCard rows={forecast} baseCurrency={settings.baseCurrency} />
             </CollapsibleCard>
-            <CollapsibleCard title={t("dayType.title")} defaultCollapsed>
+            <CollapsibleCard anchorId="sec-daytype" title={t("dayType.title")} defaultCollapsed>
               <DayTypeAnalytics
                 onViewDetails={() => setDayTypeOpen(true)}
                 breakdown={dayTypeBreakdown}
@@ -558,6 +630,7 @@ export default function App() {
               />
             </CollapsibleCard>
             <CollapsibleCard
+              anchorId="sec-grades"
               title={t("grades.title", { month: formatPeriodLabel("month", refDate, locale) })}
               defaultCollapsed
             >
@@ -572,7 +645,7 @@ export default function App() {
           </div>
         </div>
 
-        <CollapsibleCard title={t("heatmap.title")} defaultCollapsed>
+        <CollapsibleCard anchorId="sec-heatmap" title={t("heatmap.title")} defaultCollapsed>
           <SpendingHeatmap grid={heatmapGrid} baseCurrency={settings.baseCurrency} />
         </CollapsibleCard>
       </main>
@@ -669,6 +742,7 @@ export default function App() {
         <UpdatePrompt />
       </div>
     </div>
+    </CollapseControlContext.Provider>
     </I18nProvider>
   );
 }

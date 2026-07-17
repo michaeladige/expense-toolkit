@@ -411,6 +411,15 @@ export const id: TranslationDict = {
     "heatmap.aria": "Peta panas kalender pengeluaran harian",
     "heatmap.less": "Sedikit",
     "heatmap.more": "Banyak",
+
+    // Mobile nav / menu
+    "menu.open": "Menu",
+    "menu.jumpTo": "Lompat ke",
+    "menu.expandAll": "Buka semua",
+    "menu.collapseAll": "Tutup semua",
+    "menu.transactions": "Transaksi",
+    "menu.budgets": "Anggaran",
+    "menu.grades": "Nilai",
   },
 
   defaultCategoryNames: {
