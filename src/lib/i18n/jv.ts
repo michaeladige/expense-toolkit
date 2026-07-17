@@ -363,6 +363,53 @@ export const jv: TranslationDict = {
     "notify.singleBody": ({ label, net, income, expense }) =>
       `${label}: sisa ${net} · ${income} mlebu, ${expense} minggat`,
     "notify.multiTitle": ({ n }) => `${n} rapor anyar wis siap`,
+
+    // Analytics – period comparison
+    "compare.title": "Sing owah",
+    "compare.subtitle": "vs periode sadurunge",
+    "compare.empty": "Durung ana periode sadurunge kanggo dibandhingake.",
+    "compare.vsPrev": "vs periode sadurunge",
+    "compare.vsPrevAmount": ({ amount }) => `${amount} vs periode sadurunge`,
+    "compare.noChange": "tetep",
+    "compare.new": "anyar",
+
+    // Analytics – category drill-down
+    "category.closeAria": "Tutup rincian kategori",
+    "category.empty": "Durung ana belanja ing kategori iki periode iki.",
+    "category.shareOfPeriod": ({ pct }) => `${pct}% saka belanja periode iki`,
+    "category.transactions": "Transaksi",
+    "category.avgPerTx": "Rata-rata / transaksi",
+    "category.median": "Median",
+    "category.largest": "Paling gedhe",
+    "category.trendTitle": "Tren anyar",
+    "category.topNotes": "Cathetan dhuwur",
+
+    // Analytics – spend forecast
+    "forecast.title": "Ramalan belanja",
+    "forecast.subtitle": "Proyeksi saka laju saiki",
+    "forecast.empty":
+      "Ramalan katon yen minggu utawa sasi saiki wis mlaku.",
+    "forecast.thisMonth": "Sasi iki",
+    "forecast.thisWeek": "Minggu iki",
+    "forecast.approx": "~kira-kira",
+    "forecast.weekApproxTitle":
+      "Lagi sawetara dina ing seminggu iku sampel cilik, dadi proyeksi mingguan gampang owah.",
+    "forecast.projected": ({ amount }) => `Proyeksi ${amount}`,
+    "forecast.over": ({ amount }) => `Luwih ${amount}`,
+    "forecast.under": ({ amount }) => `Kurang ${amount}`,
+    "forecast.onTrack": "Cocog dalan",
+    "forecast.spentSoFar": ({ amount }) => `${amount} nganti saiki`,
+    "forecast.dayOf": ({ day, total }) => `dina ${day} saka ${total}`,
+    "forecast.vsBudget": ({ amount }) => `vs anggaran Sakabehe ${amount}`,
+    "forecast.vsAverage": ({ amount }) => `vs rata-rata ${amount}`,
+
+    // Analytics – daily heatmap
+    "heatmap.title": "Belanja saben dina",
+    "heatmap.subtitle": "26 minggu pungkasan · luwih peteng = luwih akeh",
+    "heatmap.empty": "Cathet sawetara belanja kanggo ndeleng pola saben dinamu.",
+    "heatmap.aria": "Peta panas kalender belanja saben dina",
+    "heatmap.less": "Sithik",
+    "heatmap.more": "Akeh",
   },
 
   defaultCategoryNames: {

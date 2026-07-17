@@ -12,9 +12,20 @@ import {
   formatPeriodLabel,
   getRecentPeriods,
   monthKey,
+  shiftPeriod,
   todayISO,
 } from "./lib/dates";
-import { sumByCategoryInBase, totalInBase, totalsByMonthInBase } from "./lib/summary";
+import {
+  diffByCategory,
+  netInBase,
+  statsInBase,
+  sumByCategoryInBase,
+  totalInBase,
+  totalsByMonthInBase,
+} from "./lib/summary";
+import { convert } from "./lib/currency";
+import { projectPeriod } from "./lib/forecast";
+import { buildDailyTotals, buildHeatmapGrid } from "./lib/heatmap";
 import { topFavorites } from "./lib/favorites";
 import { gradeSavings, gradeSpending } from "./lib/grade";
 import { buildDayTypeBreakdown } from "./lib/daytype";
@@ -26,6 +37,10 @@ import { EntryList } from "./components/EntryList";
 import { AllEntriesPanel } from "./components/AllEntriesPanel";
 import { SummaryCards } from "./components/SummaryCards";
 import { CategoryChart } from "./components/CategoryChart";
+import { ComparisonMovers } from "./components/ComparisonMovers";
+import { CategoryDetailsPanel, type CategoryDetail } from "./components/CategoryDetailsPanel";
+import { ForecastCard, type ForecastRow } from "./components/ForecastCard";
+import { SpendingHeatmap } from "./components/SpendingHeatmap";
 import { DayTypeAnalytics } from "./components/DayTypeAnalytics";
 import { DayTypeDetailsPanel } from "./components/DayTypeDetailsPanel";
 import { TrendChart } from "./components/TrendChart";
@@ -67,6 +82,7 @@ export default function App() {
   const [reportsOpen, setReportsOpen] = useState(false);
   const [allEntriesOpen, setAllEntriesOpen] = useState(false);
   const [dayTypeOpen, setDayTypeOpen] = useState(false);
+  const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
 
   const { fresh, dismissFresh } = useAutoReports({
     expenses: store.expenses,
@@ -127,6 +143,80 @@ export default function App() {
       .map((category) => ({ category, amount: totals[category.id] ?? 0 }))
       .filter((s) => s.amount > 0);
   }, [periodExpenses, store.categories, settings.baseCurrency, rates]);
+
+  // This period vs the previous equivalent period: total deltas for the summary
+  // cards and the biggest per-category movers. Walk back from the period's start
+  // (not `refDate`) so a month shift off the 31st can't skip a month.
+  const comparison = useMemo(() => {
+    const prevRef = shiftPeriod(period, getRange(period, refDate).start, -1);
+    const prevRange = getRange(period, prevRef);
+    const prevExpenses = store.expenses.filter((e) => isWithinRange(e.date, prevRange));
+    const prevIncomes = store.incomes.filter((e) => isWithinRange(e.date, prevRange));
+    const hasPrev = prevExpenses.length > 0 || prevIncomes.length > 0;
+    const prevNet = netInBase(prevIncomes, prevExpenses, settings.baseCurrency, rates);
+    const movers = diffByCategory(
+      sumByCategoryInBase(periodExpenses, settings.baseCurrency, rates),
+      sumByCategoryInBase(prevExpenses, settings.baseCurrency, rates)
+    );
+    return {
+      hasPrev,
+      prev: { income: prevNet.income, expense: prevNet.expense, net: prevNet.net },
+      movers,
+    };
+  }, [store.expenses, store.incomes, periodExpenses, period, refDate, settings.baseCurrency, rates]);
+
+  // Drill-down for the selected category: period-scoped distribution stats, its
+  // share of the period, a recent-period trend, and its notes ranked by spend.
+  const categoryDetail = useMemo<CategoryDetail | null>(() => {
+    if (!drillCategoryId) return null;
+    const base = settings.baseCurrency;
+    const entries = periodExpenses.filter((e) => e.categoryId === drillCategoryId);
+    const stats = statsInBase(entries, base, rates);
+    const periodTotal = totalInBase(periodExpenses, base, rates).total;
+
+    const counts: Record<PeriodType, number> = { day: 14, week: 8, month: 12 };
+    const buckets = getRecentPeriods(period, refDate, counts[period], locale);
+    const trend = buckets.map((b) => ({
+      label: b.label,
+      total: totalInBase(
+        store.expenses.filter(
+          (e) => e.categoryId === drillCategoryId && isWithinRange(e.date, b)
+        ),
+        base,
+        rates
+      ).total,
+    }));
+
+    const noteMap = new Map<string, { note: string; total: number; count: number }>();
+    for (const e of entries) {
+      const note = (e.note ?? "").trim();
+      if (!note) continue;
+      const amount = convert(e.amount, e.currency, base, rates) ?? e.amount;
+      const row = noteMap.get(note) ?? { note, total: 0, count: 0 };
+      row.total += amount;
+      row.count += 1;
+      noteMap.set(note, row);
+    }
+    const topNotes = [...noteMap.values()].sort((a, b) => b.total - a.total);
+
+    return {
+      category: store.categoryById(drillCategoryId),
+      stats,
+      share: periodTotal > 0 ? stats.total / periodTotal : 0,
+      trend,
+      topNotes,
+    };
+  }, [
+    drillCategoryId,
+    periodExpenses,
+    store.expenses,
+    store.categoryById,
+    period,
+    refDate,
+    settings.baseCurrency,
+    rates,
+    locale,
+  ]);
 
   // Budgets and grades always track the calendar month containing refDate.
   const monthData = useMemo(() => {
@@ -225,6 +315,82 @@ export default function App() {
     [store.expenses, holidays.calendar, holidays.knownYears, settings.baseCurrency, rates]
   );
 
+  // Run-rate projection for the current real month and week (based on today,
+  // independent of the viewed period — like the day-type card). Each row is
+  // dropped when its period isn't in progress; the card hides when both are.
+  const forecast = useMemo<ForecastRow[]>(() => {
+    const base = settings.baseCurrency;
+    const today = new Date();
+    const rows: ForecastRow[] = [];
+
+    for (const p of ["month", "week"] as const) {
+      const range = getRange(p, today);
+      const spent = totalInBase(
+        store.expenses.filter((e) => isWithinRange(e.date, range)),
+        base,
+        rates
+      ).total;
+      const projection = projectPeriod(range, today, spent);
+      if (!projection) continue;
+
+      let target: number | null = null;
+      let targetSource: "budget" | "average" | null = null;
+
+      if (p === "month") {
+        // Same target rule as the spending grade: Overall budget, else the
+        // average of prior months that recorded any spend.
+        const overallBudget = store.budgets.find((b) => b.categoryId === "all");
+        if (overallBudget) {
+          target = overallBudget.amount;
+          targetSource = "budget";
+        } else {
+          const curKey = monthKey(today);
+          const prior = Object.entries(
+            totalsByMonthInBase(store.expenses, base, rates)
+          )
+            .filter(([k]) => k < curKey)
+            .map(([, v]) => v);
+          if (prior.length > 0) {
+            target = prior.reduce((s, v) => s + v, 0) / prior.length;
+            targetSource = "average";
+          }
+        }
+      } else {
+        // Week baseline: the average of prior weeks that had any spending.
+        const buckets = getRecentPeriods("week", today, 9, locale);
+        const prior = buckets
+          .filter((b) => b.start.getTime() < range.start.getTime())
+          .map(
+            (b) =>
+              totalInBase(
+                store.expenses.filter((e) => isWithinRange(e.date, b)),
+                base,
+                rates
+              ).total
+          )
+          .filter((v) => v > 0);
+        if (prior.length > 0) {
+          target = prior.reduce((s, v) => s + v, 0) / prior.length;
+          targetSource = "average";
+        }
+      }
+
+      rows.push({ period: p, projection, target, targetSource });
+    }
+    return rows;
+  }, [store.expenses, store.budgets, settings.baseCurrency, rates, locale]);
+
+  // All-time daily spend, laid out as the last 26 Monday-start weeks.
+  const heatmapGrid = useMemo(
+    () =>
+      buildHeatmapGrid(
+        buildDailyTotals(store.expenses, settings.baseCurrency, rates),
+        26,
+        new Date()
+      ),
+    [store.expenses, settings.baseCurrency, rates]
+  );
+
   function handleSubmit(kind: EntryKind, data: Omit<Expense, "id" | "createdAt">) {
     if (editing) {
       // The form locks `kind` while editing, so an entry always updates in place.
@@ -305,6 +471,7 @@ export default function App() {
           incomes={periodIncomes}
           baseCurrency={settings.baseCurrency}
           rates={rates}
+          prev={comparison.hasPrev ? comparison.prev : null}
         />
 
         <div className={styles.columns}>
@@ -341,7 +508,14 @@ export default function App() {
             <CategoryChart
               data={categorySlices}
               baseCurrency={settings.baseCurrency}
+              onSelectCategory={setDrillCategoryId}
             />
+            <ComparisonMovers
+              movers={comparison.hasPrev ? comparison.movers : []}
+              categoryById={store.categoryById}
+              baseCurrency={settings.baseCurrency}
+            />
+            <ForecastCard rows={forecast} baseCurrency={settings.baseCurrency} />
             <DayTypeAnalytics
               onViewDetails={() => setDayTypeOpen(true)}
               breakdown={dayTypeBreakdown}
@@ -378,6 +552,8 @@ export default function App() {
             />
           </div>
         </div>
+
+        <SpendingHeatmap grid={heatmapGrid} baseCurrency={settings.baseCurrency} />
       </main>
 
       {settingsOpen && (
@@ -448,6 +624,15 @@ export default function App() {
           baseCurrency={settings.baseCurrency}
           categoryById={store.categoryById}
           onClose={() => setDayTypeOpen(false)}
+        />
+      )}
+
+      {categoryDetail && (
+        <CategoryDetailsPanel
+          detail={categoryDetail}
+          baseCurrency={settings.baseCurrency}
+          periodLabel={formatPeriodLabel(period, refDate, locale)}
+          onClose={() => setDrillCategoryId(null)}
         />
       )}
 

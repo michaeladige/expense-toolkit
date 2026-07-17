@@ -73,6 +73,69 @@ export function totalsByMonthInBase(
   return out;
 }
 
+export interface CategoryDelta {
+  categoryId: string;
+  current: number;
+  previous: number;
+  /** current - previous; positive means more spent than last period. */
+  delta: number;
+}
+
+/**
+ * Per-category change between two already-computed base-currency total maps
+ * (e.g. this period vs the previous one). Every category present on either
+ * side appears; sorted by the magnitude of the change, biggest movers first.
+ */
+export function diffByCategory(
+  current: Record<string, number>,
+  previous: Record<string, number>
+): CategoryDelta[] {
+  const ids = new Set([...Object.keys(current), ...Object.keys(previous)]);
+  const out: CategoryDelta[] = [];
+  for (const categoryId of ids) {
+    const cur = current[categoryId] ?? 0;
+    const prev = previous[categoryId] ?? 0;
+    out.push({ categoryId, current: cur, previous: prev, delta: cur - prev });
+  }
+  return out.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+}
+
+export interface EntryStats {
+  /** Number of entries. */
+  count: number;
+  /** Total in base currency. */
+  total: number;
+  /** total / count, or 0 when count === 0. */
+  mean: number;
+  /** Middle converted amount (average of the two middles for an even count). */
+  median: number;
+  /** Largest single converted amount. */
+  max: number;
+}
+
+/**
+ * Distribution stats for a set of entries, in the base currency — count, total,
+ * mean, median and max. Unlike a bare total these expose the *shape* of spend:
+ * a mean of 80 reads very differently once you can see the median and the
+ * largest single hit next to it.
+ */
+export function statsInBase(
+  entries: Entry[],
+  base: string,
+  rates: RateMap
+): EntryStats {
+  const amounts = entries
+    .map((e) => convert(e.amount, e.currency, base, rates) ?? e.amount)
+    .sort((a, b) => a - b);
+  const count = amounts.length;
+  if (count === 0) return { count: 0, total: 0, mean: 0, median: 0, max: 0 };
+  const total = amounts.reduce((s, v) => s + v, 0);
+  const mid = Math.floor(count / 2);
+  const median =
+    count % 2 === 0 ? (amounts[mid - 1] + amounts[mid]) / 2 : amounts[mid];
+  return { count, total, mean: total / count, median, max: amounts[count - 1] };
+}
+
 export interface NetTotal {
   income: number;
   expense: number;

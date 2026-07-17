@@ -42,8 +42,17 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.85rem;
-  padding: 0.15rem 0;
+  padding: 0.15rem 0.25rem;
+  border-radius: var(--radius-sm);
   cursor: default;
+}
+.legendClickable {
+  cursor: pointer;
+}
+.legendClickable:hover,
+.legendClickable:focus-visible {
+  background: var(--surface-2, rgba(127, 127, 127, 0.18));
+  outline: none;
 }
 
 .swatch {

@@ -4,14 +4,63 @@ import { netInBase, sumByCurrency } from "../lib/summary";
 import { useI18n } from "../lib/i18n/I18nContext";
 import styles from "./SummaryCards.module.css";
 
+/** Previous-period totals to compare against; omitted when there's no prior period. */
+export interface SummaryPrev {
+  income: number;
+  expense: number;
+  net: number;
+}
+
 interface Props {
   expenses: Expense[];
   incomes: Income[];
   baseCurrency: string;
   rates: RateMap;
+  prev?: SummaryPrev | null;
 }
 
-export function SummaryCards({ expenses, incomes, baseCurrency, rates }: Props) {
+/** A signed change badge. `goodWhenUp` decides the colour: income/net rising is
+ *  good (green), expenses rising is bad (red); no colour when nothing moved. */
+function DeltaBadge({
+  current,
+  previous,
+  goodWhenUp,
+  baseCurrency,
+}: {
+  current: number;
+  previous: number;
+  goodWhenUp: boolean;
+  baseCurrency: string;
+}) {
+  const { t } = useI18n();
+  const diff = current - previous;
+  if (Math.abs(diff) < 0.005) {
+    return (
+      <span className={`${styles.delta} ${styles.deltaFlat}`} title={t("compare.vsPrev")}>
+        — {t("compare.noChange")}
+      </span>
+    );
+  }
+  const up = diff > 0;
+  const good = up === goodWhenUp;
+  const pct = previous !== 0 ? (diff / Math.abs(previous)) * 100 : null;
+  const label =
+    pct != null
+      ? `${Math.abs(pct) >= 999 ? "999+" : Math.round(Math.abs(pct))}%`
+      : t("compare.new");
+  return (
+    <span
+      className={`${styles.delta} ${good ? styles.deltaGood : styles.deltaBad}`}
+      title={t("compare.vsPrevAmount", {
+        amount: `${diff > 0 ? "+" : "−"}${formatMoney(Math.abs(diff), baseCurrency)}`,
+      })}
+    >
+      {up ? "▲" : "▼"} {label}
+    </span>
+  );
+}
+
+export function SummaryCards({ expenses, incomes, baseCurrency, rates, prev }: Props) {
   const { t } = useI18n();
   const perCurrency = sumByCurrency(expenses);
   const { income, expense, net, missing } = netInBase(
@@ -38,21 +87,49 @@ export function SummaryCards({ expenses, incomes, baseCurrency, rates }: Props) 
           {t("summary.txCount", { n: count })}
           {currencies.length > 1 &&
             ` · ${t("summary.currencyCount", { n: currencies.length })}`}
+          {prev && (
+            <DeltaBadge
+              current={net}
+              previous={prev.net}
+              goodWhenUp
+              baseCurrency={baseCurrency}
+            />
+          )}
         </span>
       </div>
 
       <div className={`card ${styles.flowCard}`}>
-        <div>
+        <div className={styles.flowRow}>
           <span className={styles.caption}>{t("summary.income")}</span>
-          <strong className={`${styles.flowValue} ${styles.positive}`}>
-            {formatMoney(income, baseCurrency)}
-          </strong>
+          <div className={styles.flowLine}>
+            <strong className={`${styles.flowValue} ${styles.positive}`}>
+              {formatMoney(income, baseCurrency)}
+            </strong>
+            {prev && (
+              <DeltaBadge
+                current={income}
+                previous={prev.income}
+                goodWhenUp
+                baseCurrency={baseCurrency}
+              />
+            )}
+          </div>
         </div>
-        <div>
+        <div className={styles.flowRow}>
           <span className={styles.caption}>{t("summary.expenses")}</span>
-          <strong className={styles.flowValue}>
-            {formatMoney(expense, baseCurrency)}
-          </strong>
+          <div className={styles.flowLine}>
+            <strong className={styles.flowValue}>
+              {formatMoney(expense, baseCurrency)}
+            </strong>
+            {prev && (
+              <DeltaBadge
+                current={expense}
+                previous={prev.expense}
+                goodWhenUp={false}
+                baseCurrency={baseCurrency}
+              />
+            )}
+          </div>
         </div>
       </div>
 
