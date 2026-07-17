@@ -1,0 +1,72 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.scroll {
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+.svg {
+  display: block;
+}
+
+.axis {
+  fill: var(--text-muted);
+  font-size: 9px;
+}
+
+/* Level colour ramp, driven by a single custom property so the same class
+   works for the SVG cells (fill) and the legend swatches (background). */
+.cell {
+  fill: var(--cell);
+  transition: fill 0.15s ease;
+}
+.future {
+  opacity: 0.35;
+}
+.swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--cell);
+}
+
+.level0 {
+  --cell: var(--surface-2, rgba(127, 127, 127, 0.18));
+}
+.level1 {
+  --cell: color-mix(in srgb, var(--accent, var(--primary)) 22%, var(--surface-2));
+}
+.level2 {
+  --cell: color-mix(in srgb, var(--accent, var(--primary)) 45%, var(--surface-2));
+}
+.level3 {
+  --cell: color-mix(in srgb, var(--accent, var(--primary)) 70%, var(--surface-2));
+}
+.level4 {
+  --cell: var(--accent, var(--primary));
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  align-self: flex-end;
+}

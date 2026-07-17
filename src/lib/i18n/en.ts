@@ -363,6 +363,53 @@ export const en: TranslationDict = {
     "notify.singleBody": ({ label, net, income, expense }) =>
       `${label}: ${net} net · ${income} in, ${expense} out`,
     "notify.multiTitle": ({ n }) => `${n} new reports are ready`,
+
+    // Analytics – period comparison
+    "compare.title": "What changed",
+    "compare.subtitle": "vs your previous period",
+    "compare.empty": "No previous period to compare against yet.",
+    "compare.vsPrev": "vs previous period",
+    "compare.vsPrevAmount": ({ amount }) => `${amount} vs previous period`,
+    "compare.noChange": "no change",
+    "compare.new": "new",
+
+    // Analytics – category drill-down
+    "category.closeAria": "Close category details",
+    "category.empty": "No spending in this category this period.",
+    "category.shareOfPeriod": ({ pct }) => `${pct}% of this period's spending`,
+    "category.transactions": "Transactions",
+    "category.avgPerTx": "Avg / transaction",
+    "category.median": "Median",
+    "category.largest": "Largest",
+    "category.trendTitle": "Recent trend",
+    "category.topNotes": "Top notes",
+
+    // Analytics – spend forecast
+    "forecast.title": "Spending forecast",
+    "forecast.subtitle": "Projected at your current pace",
+    "forecast.empty":
+      "Your forecast appears once the current week or month is underway.",
+    "forecast.thisMonth": "This month",
+    "forecast.thisWeek": "This week",
+    "forecast.approx": "~rough",
+    "forecast.weekApproxTitle":
+      "A few days into a week is a small sample, so the weekly projection swings a lot.",
+    "forecast.projected": ({ amount }) => `Projected ${amount}`,
+    "forecast.over": ({ amount }) => `Over by ${amount}`,
+    "forecast.under": ({ amount }) => `Under by ${amount}`,
+    "forecast.onTrack": "On track",
+    "forecast.spentSoFar": ({ amount }) => `${amount} so far`,
+    "forecast.dayOf": ({ day, total }) => `day ${day} of ${total}`,
+    "forecast.vsBudget": ({ amount }) => `vs ${amount} Overall budget`,
+    "forecast.vsAverage": ({ amount }) => `vs ${amount} average`,
+
+    // Analytics – daily heatmap
+    "heatmap.title": "Daily spending",
+    "heatmap.subtitle": "Last 26 weeks · darker = more",
+    "heatmap.empty": "Log some expenses to see your daily spending pattern.",
+    "heatmap.aria": "Calendar heatmap of daily spending",
+    "heatmap.less": "Less",
+    "heatmap.more": "More",
   },
 
   defaultCategoryNames: {

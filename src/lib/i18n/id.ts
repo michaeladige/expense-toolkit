@@ -364,6 +364,53 @@ export const id: TranslationDict = {
     "notify.singleBody": ({ label, net, income, expense }) =>
       `${label}: sisa ${net} · ${income} masuk, ${expense} kabur`,
     "notify.multiTitle": ({ n }) => `${n} rapor baru udah siap`,
+
+    // Analytics – period comparison
+    "compare.title": "Yang berubah",
+    "compare.subtitle": "vs periode sebelumnya",
+    "compare.empty": "Belum ada periode sebelumnya untuk dibandingkan.",
+    "compare.vsPrev": "vs periode sebelumnya",
+    "compare.vsPrevAmount": ({ amount }) => `${amount} vs periode sebelumnya`,
+    "compare.noChange": "tetap",
+    "compare.new": "baru",
+
+    // Analytics – category drill-down
+    "category.closeAria": "Tutup detail kategori",
+    "category.empty": "Belum ada pengeluaran di kategori ini periode ini.",
+    "category.shareOfPeriod": ({ pct }) => `${pct}% dari pengeluaran periode ini`,
+    "category.transactions": "Transaksi",
+    "category.avgPerTx": "Rata-rata / transaksi",
+    "category.median": "Median",
+    "category.largest": "Terbesar",
+    "category.trendTitle": "Tren terkini",
+    "category.topNotes": "Catatan teratas",
+
+    // Analytics – spend forecast
+    "forecast.title": "Perkiraan pengeluaran",
+    "forecast.subtitle": "Proyeksi dari laju saat ini",
+    "forecast.empty":
+      "Perkiraan muncul begitu minggu atau bulan berjalan sudah dimulai.",
+    "forecast.thisMonth": "Bulan ini",
+    "forecast.thisWeek": "Minggu ini",
+    "forecast.approx": "~kira-kira",
+    "forecast.weekApproxTitle":
+      "Baru beberapa hari dalam seminggu itu sampel kecil, jadi proyeksi mingguan gampang berubah.",
+    "forecast.projected": ({ amount }) => `Proyeksi ${amount}`,
+    "forecast.over": ({ amount }) => `Lebih ${amount}`,
+    "forecast.under": ({ amount }) => `Kurang ${amount}`,
+    "forecast.onTrack": "Sesuai jalur",
+    "forecast.spentSoFar": ({ amount }) => `${amount} sejauh ini`,
+    "forecast.dayOf": ({ day, total }) => `hari ${day} dari ${total}`,
+    "forecast.vsBudget": ({ amount }) => `vs anggaran Keseluruhan ${amount}`,
+    "forecast.vsAverage": ({ amount }) => `vs rata-rata ${amount}`,
+
+    // Analytics – daily heatmap
+    "heatmap.title": "Pengeluaran harian",
+    "heatmap.subtitle": "26 minggu terakhir · lebih gelap = lebih banyak",
+    "heatmap.empty": "Catat beberapa pengeluaran untuk melihat pola harianmu.",
+    "heatmap.aria": "Peta panas kalender pengeluaran harian",
+    "heatmap.less": "Sedikit",
+    "heatmap.more": "Banyak",
   },
 
   defaultCategoryNames: {

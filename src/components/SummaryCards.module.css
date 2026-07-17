@@ -29,6 +29,35 @@
   font-size: 0.8rem;
   color: var(--text-muted);
   margin-top: 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.deltaGood {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+}
+.deltaBad {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+.deltaFlat {
+  color: var(--text-muted);
+  background: var(--surface-2, rgba(127, 127, 127, 0.18));
+  font-weight: 600;
 }
 
 .positive {
@@ -48,6 +77,17 @@
   font-size: 1.15rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+.flowRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.flowLine {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .currencyList {

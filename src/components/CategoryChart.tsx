@@ -13,6 +13,8 @@ export interface CategorySlice {
 interface Props {
   data: CategorySlice[];
   baseCurrency: string;
+  /** Opens the drill-down for a category; slices/legend rows become clickable. */
+  onSelectCategory?: (categoryId: string) => void;
 }
 
 const SIZE = 180;
@@ -21,9 +23,13 @@ const R = (SIZE - STROKE) / 2;
 const C = 2 * Math.PI * R;
 const GAP = 2; // px surface gap between segments
 
-export function CategoryChart({ data, baseCurrency }: Props) {
+export function CategoryChart({ data, baseCurrency, onSelectCategory }: Props) {
   const { t, lang } = useI18n();
   const [active, setActive] = useState<number | null>(null);
+
+  const select = (category: CategorySlice["category"]) => {
+    if (onSelectCategory && category) onSelectCategory(category.id);
+  };
 
   const slices = data
     .filter((d) => d.amount > 0)
@@ -82,6 +88,8 @@ export function CategoryChart({ data, baseCurrency }: Props) {
               className={styles.segment}
               onMouseEnter={() => setActive(s.index)}
               onMouseLeave={() => setActive(null)}
+              onClick={() => select(slices[s.index].category)}
+              style={onSelectCategory ? { cursor: "pointer" } : undefined}
             />
           ))}
           <text
@@ -106,9 +114,20 @@ export function CategoryChart({ data, baseCurrency }: Props) {
           {slices.map((d, i) => (
             <li
               key={d.category?.id ?? i}
-              className={styles.legendItem}
+              className={`${styles.legendItem} ${
+                onSelectCategory && d.category ? styles.legendClickable : ""
+              }`}
               onMouseEnter={() => setActive(i)}
               onMouseLeave={() => setActive(null)}
+              onClick={() => select(d.category)}
+              role={onSelectCategory && d.category ? "button" : undefined}
+              tabIndex={onSelectCategory && d.category ? 0 : undefined}
+              onKeyDown={(e) => {
+                if (onSelectCategory && d.category && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  select(d.category);
+                }
+              }}
             >
               <span
                 className={styles.swatch}
