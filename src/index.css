@@ -58,6 +58,9 @@
   --tint-bg: 5%;
   --tint-surface: 2%;
   --pattern-tint: 9%;
+  /* Softer than the page so the texture reads through cards without fighting
+     the text sitting on top of it. */
+  --pattern-tint-card: 4.5%;
 }
 
 :root[data-mode="dark"] {
@@ -74,6 +77,7 @@
   --tint-bg: 7%;
   --tint-surface: 4%;
   --pattern-tint: 12%;
+  --pattern-tint-card: 6%;
 }
 
 /* Pattern: pure CSS gradients, inked in the accent so they follow both other
@@ -160,7 +164,17 @@ button {
 
 /* ---------- Shared primitives ---------- */
 .card {
-  background: var(--surface);
+  /* Same theme pattern as the page, but inked softer (via --pattern-tint-card)
+     so it's a faint texture behind card content, never a legibility problem.
+     Resolves to `none` when the pattern setting is "none". */
+  --pattern-ink: color-mix(
+    in srgb,
+    var(--accent) var(--pattern-tint-card),
+    transparent
+  );
+  background-color: var(--surface);
+  background-image: var(--pattern-image, none);
+  background-size: var(--pattern-size, auto);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
