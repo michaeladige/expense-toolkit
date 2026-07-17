@@ -140,32 +140,32 @@ export const en: TranslationDict = {
     "grades.vsBudget": "vs Overall budget",
     "grades.vsIncome": "vs Income",
     "grades.spendingPending":
-      "Set an Overall budget below, or come back once a prior month has some expenses to compare against.",
+      "Nothing to grade yet. Set an Overall budget below, or log a full month before we judge you.",
     "grades.savingsPending":
-      "Record some income this month to get a savings grade.",
+      "No income logged, so there's nothing to grade. Fix that first.",
     "grades.ofBudget": ({ total, target, pct }) =>
       `${total} of ${target} (${pct}%)`,
     "grades.ofAverage": ({ total, target, pct }) =>
       `${total} of your ~${target} average (${pct}%)`,
     "grades.averageNote":
-      "No Overall budget set — grading against your average monthly spend instead.",
+      "No budget set, so you're graded against your own average. The bar is you.",
     "grades.kept": ({ net, income, pct }) =>
       `Kept ${net} of ${income} earned (${pct}%)`,
 
     // Grade tier labels (spending: lower is better)
-    "grade.spending.S": "Certified tightwad. We're impressed.",
-    "grade.spending.A": "Basically a budgeting wizard.",
-    "grade.spending.B": "Solid. Your wallet approves.",
-    "grade.spending.C": "A bit spicy, but survivable.",
-    "grade.spending.D": "Your wallet is filing a complaint.",
-    "grade.spending.F": "RIP wallet. Send flowers.",
+    "grade.spending.S": "Barely spent a thing. Don't let it go to your head.",
+    "grade.spending.A": "Tight month. Now do it again — no coasting.",
+    "grade.spending.B": "\"Fine\" isn't a flex. Tighten up.",
+    "grade.spending.C": "Sloppy — and you know exactly which purchase did it.",
+    "grade.spending.D": "This is a problem, and the problem is you.",
+    "grade.spending.F": "Put the card down and walk away. Now.",
     // Grade tier labels (savings: higher is better)
-    "grade.savings.S": "Hoarding like a dragon. Respect.",
-    "grade.savings.A": "Saving like you mean it.",
-    "grade.savings.B": "A tidy little cushion.",
-    "grade.savings.C": "Breaking even. Just barely.",
-    "grade.savings.D": "Spending more than you earn.",
-    "grade.savings.F": "Torching the savings. Please stop.",
+    "grade.savings.S": "Hoarding hard. Don't you dare relax.",
+    "grade.savings.A": "Actually saving. Prove it wasn't a fluke.",
+    "grade.savings.B": "Thin cushion. Thin won't catch you.",
+    "grade.savings.C": "Breaking even is just losing in slow motion.",
+    "grade.savings.D": "Spending money you don't have. Stop it.",
+    "grade.savings.F": "You're torching the savings. Cut it out.",
 
     // Budgets
     "budget.title": ({ month }) => `Budgets · ${month}`,
@@ -230,7 +230,7 @@ export const en: TranslationDict = {
     "reports.title": "Reports",
     "reports.closeAria": "Close reports",
     "reports.empty":
-      "No reports yet. One is written automatically for each week and month that finishes while you're using the app.",
+      "No reports yet — nothing's finished for us to judge. Give it a week.",
     "reports.week": "Week",
     "reports.month": "Month",
     "reports.changeTitle": "Change in net vs the previous period",
@@ -241,8 +241,8 @@ export const en: TranslationDict = {
     "period.weekly": "weekly",
     "period.monthly": "monthly",
     "toast.single": ({ period, label, net }) =>
-      `Your ${period} report for ${label} is ready — ${net} net.`,
-    "toast.multiple": ({ n }) => `${n} new reports are ready.`,
+      `Your ${period} report for ${label} landed: ${net} net. No hiding from it now.`,
+    "toast.multiple": ({ n }) => `${n} new reports. Time to face the numbers.`,
     "toast.view": "View",
     "toast.dismiss": "Dismiss",
 
@@ -359,10 +359,10 @@ export const en: TranslationDict = {
     "backup.error.readFail": "Could not read that backup file.",
 
     // Notifications
-    "notify.singleTitle": ({ period }) => `Your ${period} report is ready`,
+    "notify.singleTitle": ({ period }) => `Your ${period} report is in. Brace yourself`,
     "notify.singleBody": ({ label, net, income, expense }) =>
       `${label}: ${net} net · ${income} in, ${expense} out`,
-    "notify.multiTitle": ({ n }) => `${n} new reports are ready`,
+    "notify.multiTitle": ({ n }) => `${n} reports waiting. No dodging them`,
 
     // Analytics – period comparison
     "compare.title": "What changed",
@@ -466,11 +466,11 @@ export const en: TranslationDict = {
         `You lean toward spending on ${top}. Bold of you to have a favorite kind of day to hemorrhage money.`,
     ],
     adviceSingle:
-      "Log a few more days and this becomes a real workday-vs-days-off showdown.",
+      "Log a few more days before we can properly call you out.",
     adviceDominant: ({ top, ratio }) =>
-      `Your ${top} day-rate runs ${ratio}× the rest — naming one "fun budget" number up front tends to tame those days.`,
+      `Your ${top} run ${ratio}× the rest. Set a hard fun-budget and actually stick to it for once.`,
     adviceBalanced:
-      "Your workdays and days off are fairly balanced — one overall monthly budget will serve you better than watching the calendar.",
+      "Evenly leaky everywhere. One monthly budget and a little restraint would fix it.",
     quipDayoff: [
       ({ name }) => `${name} is your signature day-off splurge. No notes.`,
       ({ name }) =>
