@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import type { Settings } from "../types";
 import {
   DEFAULT_COLOR,
+  DEFAULT_FONT,
   DEFAULT_MODE,
   DEFAULT_PATTERN,
   resolveMode,
@@ -51,6 +52,7 @@ export function useTheme(settings: Settings) {
   const mode = settings.mode ?? DEFAULT_MODE;
   const themeColor = settings.themeColor ?? DEFAULT_COLOR;
   const pattern = settings.pattern ?? DEFAULT_PATTERN;
+  const font = settings.font ?? DEFAULT_FONT;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -59,6 +61,7 @@ export function useTheme(settings: Settings) {
       root.dataset.mode = resolveMode(mode);
       root.dataset.theme = themeColor;
       root.dataset.pattern = pattern;
+      root.dataset.font = font;
       syncThemeColorMeta();
     };
 
@@ -69,5 +72,5 @@ export function useTheme(settings: Settings) {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
-  }, [mode, themeColor, pattern]);
+  }, [mode, themeColor, pattern, font]);
 }

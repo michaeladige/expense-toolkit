@@ -1,4 +1,4 @@
-import type { ThemeColor, ThemeMode, ThemePattern } from "./lib/theme";
+import type { ThemeColor, ThemeFont, ThemeMode, ThemePattern } from "./lib/theme";
 import type { Language } from "./lib/i18n/types";
 
 export type PeriodType = "day" | "week" | "month";
@@ -136,14 +136,15 @@ export interface Settings {
    */
   reportsSince?: string;
   /**
-   * Appearance. All three are optional: settings saved before theming existed
-   * (and JSON backups from then) have no such keys, and `useLocalStorage`
-   * doesn't merge defaults into a stored object — so every read site falls back
-   * to the defaults in `lib/theme.ts`.
+   * Appearance. All optional: settings saved before theming existed (and JSON
+   * backups from then) have no such keys, and `useLocalStorage` doesn't merge
+   * defaults into a stored object — so every read site falls back to the
+   * defaults in `lib/theme.ts`.
    */
   mode?: ThemeMode;
   themeColor?: ThemeColor;
   pattern?: ThemePattern;
+  font?: ThemeFont;
   /**
    * Holiday calendar used to resolve the working-day anchors of recurring
    * rules. Both optional, same reason as the appearance fields above.
