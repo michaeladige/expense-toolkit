@@ -269,7 +269,7 @@ export const en: TranslationDict = {
     "appearance.pattern": "Pattern",
     "appearance.font": "Font",
     "theme.font.system": "System",
-    "theme.font.comic": "Comic Sans",
+    "theme.font.comic": "Comic Book",
     "theme.mode.light": "Light",
     "theme.mode.dark": "Dark",
     "theme.mode.system": "System",

@@ -64,12 +64,11 @@ export const THEME_PATTERNS: { id: ThemePattern; label: string }[] = [
  * Typeface options. Like the other axes, each id maps to a `data-font` value
  * that `index.css` turns into the `--app-font` stack — a new font is one entry
  * here plus one CSS rule. "system" leaves the default stack in place; "comic"
- * is the Comic Sans MS family (with graceful fallbacks for platforms that
- * don't ship it).
+ * is the bundled Bangers comic-book display face (with a cursive fallback).
  */
 export const THEME_FONTS: { id: ThemeFont; label: string }[] = [
   { id: "system", label: "System" },
-  { id: "comic", label: "Comic Sans" },
+  { id: "comic", label: "Comic Book" },
 ];
 
 /** Resolve "system" against the OS preference. Light when unknowable (SSR/old browsers). */

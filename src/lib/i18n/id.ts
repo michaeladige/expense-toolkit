@@ -270,7 +270,7 @@ export const id: TranslationDict = {
     "appearance.pattern": "Pola",
     "appearance.font": "Font",
     "theme.font.system": "Sistem",
-    "theme.font.comic": "Comic Sans",
+    "theme.font.comic": "Komik",
     "theme.mode.light": "Terang",
     "theme.mode.dark": "Gelap",
     "theme.mode.system": "Ikut Sistem",
