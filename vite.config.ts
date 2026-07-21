@@ -41,6 +41,12 @@ export default defineConfig(({ command }) => {
         // inject its own registration script, registering the SW twice.
         injectRegister: false,
         includeAssets: ["favicon.svg", "favicon.png", "apple-touch-icon.png"],
+        // Workbox's default globPatterns omit woff2; add it so the bundled
+        // Comic Book font (Bangers) is precached and the offline PWA can render
+        // it. Everything else stays at the default app-shell precache.
+        workbox: {
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        },
         manifest: {
           name: "Expense Toolkit",
           short_name: "Expenses",

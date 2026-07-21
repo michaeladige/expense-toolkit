@@ -269,7 +269,7 @@ export const jv: TranslationDict = {
     "appearance.pattern": "Pola",
     "appearance.font": "Font",
     "theme.font.system": "Sistem",
-    "theme.font.comic": "Comic Sans",
+    "theme.font.comic": "Komik",
     "theme.mode.light": "Padhang",
     "theme.mode.dark": "Peteng",
     "theme.mode.system": "Melu Sistem",
