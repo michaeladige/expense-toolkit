@@ -7,6 +7,7 @@
  *                                    JS, so CSS only ever sees a concrete mode.
  *   data-theme   indigo | violet | emerald | cyan | amber | rose
  *   data-pattern none | dots | grid | diagonal
+ *   data-font    system | comic     — the typeface (--app-font).
  *
  * Components never reference these; they consume the derived variables at the
  * bottom of this block, which is why theming needs no component changes.
@@ -102,6 +103,20 @@
   --pattern-size: auto;
 }
 
+/* Font: each option sets the app-wide typeface stack. The default leaves the
+ * system stack in place; "comic" swaps in Comic Sans MS with fallbacks for
+ * platforms that don't ship it (Chalkboard SE on macOS/iOS, Comic Neue, then
+ * the generic cursive). Scoped to any [data-font] element (not just :root) so
+ * the picker in AppearancePanel can preview each option in its own typeface. */
+:root,
+[data-font="system"] {
+  --app-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+[data-font="comic"] {
+  --app-font: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Comic Neue",
+    cursive;
+}
+
 /* Derived — the only variables the rest of the app reads. */
 :root {
   --primary: var(--accent);
@@ -138,7 +153,7 @@ body {
 }
 
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--app-font, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
   /* Pattern rides on top of the flat background; cards are opaque, so text is
      never laid over it. `background-attachment` stays at the default `scroll` —
      `fixed` is a well-known repaint cost on iOS Safari. */
@@ -236,6 +251,9 @@ button {
   border-radius: var(--radius-sm);
   padding: 0.55rem 0.65rem;
   font-size: 0.92rem;
+  /* Form controls don't inherit font-family; opt them into the app typeface so
+     the font setting applies to inputs and selects too. */
+  font-family: inherit;
 }
 .input:focus,
 .select:focus {

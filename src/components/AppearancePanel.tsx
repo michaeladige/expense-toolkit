@@ -1,9 +1,11 @@
 import type { Settings } from "../types";
 import {
   DEFAULT_COLOR,
+  DEFAULT_FONT,
   DEFAULT_MODE,
   DEFAULT_PATTERN,
   THEME_COLORS,
+  THEME_FONTS,
   THEME_MODES,
   THEME_PATTERNS,
   resolveMode,
@@ -24,6 +26,7 @@ export function AppearancePanel({ settings, onUpdateSettings }: Props) {
   const mode = settings.mode ?? DEFAULT_MODE;
   const themeColor = settings.themeColor ?? DEFAULT_COLOR;
   const pattern = settings.pattern ?? DEFAULT_PATTERN;
+  const font = settings.font ?? DEFAULT_FONT;
   const language = settings.language ?? "en";
   // Swatches show the shade that's actually live, so a dark accent never sits
   // on a dark background looking muddy.
@@ -115,6 +118,32 @@ export function AppearancePanel({ settings, onUpdateSettings }: Props) {
                   to this swatch via data-preview. */}
               <span className={styles.patternSwatch} data-preview={p.id} aria-hidden />
               {t(`theme.pattern.${p.id}`)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.axis}>
+        <span className={styles.axisLabel} id="theme-font-label">
+          {t("appearance.font")}
+        </span>
+        <div
+          className={styles.segmented}
+          role="group"
+          aria-labelledby="theme-font-label"
+        >
+          {THEME_FONTS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              // Preview the option in its own typeface so the choice is legible
+              // before it's applied. `--app-font` per data-font lives in index.css.
+              data-font={f.id}
+              className={`${styles.segment} ${font === f.id ? styles.segmentActive : ""}`}
+              aria-pressed={font === f.id}
+              onClick={() => onUpdateSettings({ font: f.id })}
+            >
+              {t(`theme.font.${f.id}`)}
             </button>
           ))}
         </div>

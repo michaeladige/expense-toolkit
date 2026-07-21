@@ -13,6 +13,7 @@ export type ThemeColor =
   | "amber"
   | "rose";
 export type ThemePattern = "none" | "dots" | "grid" | "diagonal";
+export type ThemeFont = "system" | "comic";
 
 /** A concrete mode, once "system" has been resolved. CSS only ever sees these. */
 export type ResolvedMode = "light" | "dark";
@@ -24,6 +25,7 @@ export type ResolvedMode = "light" | "dark";
 export const DEFAULT_MODE: ThemeMode = "system";
 export const DEFAULT_COLOR: ThemeColor = "indigo";
 export const DEFAULT_PATTERN: ThemePattern = "none";
+export const DEFAULT_FONT: ThemeFont = "system";
 
 export const THEME_MODES: { id: ThemeMode; label: string }[] = [
   { id: "light", label: "Light" },
@@ -56,6 +58,18 @@ export const THEME_PATTERNS: { id: ThemePattern; label: string }[] = [
   { id: "dots", label: "Dots" },
   { id: "grid", label: "Grid" },
   { id: "diagonal", label: "Diagonal" },
+];
+
+/**
+ * Typeface options. Like the other axes, each id maps to a `data-font` value
+ * that `index.css` turns into the `--app-font` stack — a new font is one entry
+ * here plus one CSS rule. "system" leaves the default stack in place; "comic"
+ * is the Comic Sans MS family (with graceful fallbacks for platforms that
+ * don't ship it).
+ */
+export const THEME_FONTS: { id: ThemeFont; label: string }[] = [
+  { id: "system", label: "System" },
+  { id: "comic", label: "Comic Sans" },
 ];
 
 /** Resolve "system" against the OS preference. Light when unknowable (SSR/old browsers). */

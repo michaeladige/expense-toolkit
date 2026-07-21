@@ -43,6 +43,12 @@
   box-shadow: var(--shadow);
 }
 
+/* Font segments carry a data-font attribute (see AppearancePanel), which sets
+   --app-font in index.css; rendering the label in it previews the typeface. */
+.segment[data-font] {
+  font-family: var(--app-font);
+}
+
 .swatches {
   display: flex;
   flex-wrap: wrap;
