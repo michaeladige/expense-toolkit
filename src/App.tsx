@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { EntryKind, Expense, PeriodType, TaggedEntry } from "./types";
 import { useExpenses } from "./store/ExpenseContext";
 import { useExchangeRates, type RateStatus } from "./hooks/useExchangeRates";
@@ -14,14 +14,15 @@ import {
   monthKey,
   shiftPeriod,
   todayISO,
+  toISODate,
 } from "./lib/dates";
 import {
   diffByCategory,
   netInBase,
+  priorMonthAverageInBase,
   statsInBase,
   sumByCategoryInBase,
   totalInBase,
-  totalsByMonthInBase,
 } from "./lib/summary";
 import { convert } from "./lib/currency";
 import { projectPeriod } from "./lib/forecast";
@@ -29,6 +30,8 @@ import { buildDailyTotals, buildHeatmapGrid } from "./lib/heatmap";
 import { topFavorites } from "./lib/favorites";
 import { gradeSavings, gradeSpending } from "./lib/grade";
 import { buildDayTypeBreakdown } from "./lib/daytype";
+import { findMissingDays, rangeHasMissingDay } from "./lib/catchup";
+import { pendingReportPeriods } from "./lib/reports";
 import { I18nProvider } from "./lib/i18n/I18nContext";
 import { LOCALES, translate } from "./lib/i18n/translate";
 import { PeriodSelector } from "./components/PeriodSelector";
@@ -54,7 +57,12 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { ReportsPanel } from "./components/ReportsPanel";
 import { ReportToast } from "./components/ReportToast";
 import { UpdatePrompt } from "./components/UpdatePrompt";
+import { CatchUpBanner } from "./components/CatchUpBanner";
+import { CatchUpSheet } from "./components/CatchUpSheet";
 import styles from "./App.module.css";
+
+/** Stable fallback so `noSpendDays` doesn't change identity every render. */
+const EMPTY_DAYS: readonly string[] = [];
 
 const RATE_PILL: Record<RateStatus, { key: string; cls: string }> = {
   idle: { key: "rate.pill.idle", cls: "" },
@@ -86,6 +94,9 @@ export default function App() {
   const [allEntriesOpen, setAllEntriesOpen] = useState(false);
   const [dayTypeOpen, setDayTypeOpen] = useState(false);
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
+  // The days the open catch-up sheet walks, snapshotted when it opens; null
+  // while closed.
+  const [catchUpDays, setCatchUpDays] = useState<string[] | null>(null);
   // Drives every CollapsibleCard from the mobile topbar / menu. `allExpanded`
   // tracks the last "all" broadcast so the button can flip its label.
   const [collapseCmd, setCollapseCmd] = useState<CollapseCommand>({
@@ -110,6 +121,41 @@ export default function App() {
     );
   };
 
+  const noSpendDays = settings.noSpendDays ?? EMPTY_DAYS;
+
+  // Days that fell into a multi-day logging gap. Drives the catch-up banner and
+  // holds back reports for the periods they're in (see useAutoReports).
+  const missingDays = useMemo(
+    () =>
+      findMissingDays({
+        expenses: store.expenses,
+        incomes: store.incomes,
+        noSpendDays,
+        skippedThrough: settings.catchUpSkippedThrough,
+        now: new Date(),
+      }),
+    [store.expenses, store.incomes, noSpendDays, settings.catchUpSkippedThrough]
+  );
+  const missingSet = useMemo(() => new Set(missingDays), [missingDays]);
+
+  // Whether the gap is actually delaying a report right now — the banner says
+  // so, since otherwise a missing weekly report would look like a bug.
+  const holdingReports = useMemo(() => {
+    if (missingDays.length === 0 || !settings.reportsSince) return false;
+    const now = new Date();
+    return (["week", "month"] as const).some((p) =>
+      pendingReportPeriods(p, store.reports, settings.reportsSince!, now).some((ref) =>
+        rangeHasMissingDay(getRange(p, ref), missingSet)
+      )
+    );
+  }, [missingDays, missingSet, store.reports, settings.reportsSince]);
+
+  function skipCatchUp() {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    store.updateSettings({ catchUpSkippedThrough: toISODate(yesterday) });
+  }
+
   const { fresh, dismissFresh } = useAutoReports({
     expenses: store.expenses,
     incomes: store.incomes,
@@ -117,6 +163,7 @@ export default function App() {
     settings,
     rates,
     rateStatus: status,
+    missingDays: missingSet,
     categoryById: store.categoryById,
     incomeCategoryById: store.incomeCategoryById,
     addReports: store.addReports,
@@ -277,25 +324,20 @@ export default function App() {
       target = overallBudget.amount;
       targetSource = "budget";
     } else {
-      const currentMonthKey = monthKey(refDate);
-      const monthTotals = totalsByMonthInBase(
+      target = priorMonthAverageInBase(
         store.expenses,
+        noSpendDays,
+        monthKey(refDate),
         settings.baseCurrency,
         rates
       );
-      const priorTotals = Object.entries(monthTotals)
-        .filter(([key]) => key < currentMonthKey)
-        .map(([, total]) => total);
-      if (priorTotals.length > 0) {
-        target = priorTotals.reduce((s, v) => s + v, 0) / priorTotals.length;
-        targetSource = "average";
-      }
+      if (target != null) targetSource = "average";
     }
 
     if (target == null || targetSource == null) return null;
     const grade = gradeSpending(monthData.total, target);
     return grade ? { grade, target, targetSource } : null;
-  }, [store.budgets, store.expenses, refDate, settings.baseCurrency, rates, monthData.total]);
+  }, [store.budgets, store.expenses, noSpendDays, refDate, settings.baseCurrency, rates, monthData.total]);
 
   // Scored separately from the spending grade, against income rather than a
   // target: you can hold a budget and still save nothing, and one number
@@ -370,31 +412,32 @@ export default function App() {
           target = overallBudget.amount;
           targetSource = "budget";
         } else {
-          const curKey = monthKey(today);
-          const prior = Object.entries(
-            totalsByMonthInBase(store.expenses, base, rates)
-          )
-            .filter(([k]) => k < curKey)
-            .map(([, v]) => v);
-          if (prior.length > 0) {
-            target = prior.reduce((s, v) => s + v, 0) / prior.length;
-            targetSource = "average";
-          }
+          target = priorMonthAverageInBase(
+            store.expenses,
+            noSpendDays,
+            monthKey(today),
+            base,
+            rates
+          );
+          if (target != null) targetSource = "average";
         }
       } else {
-        // Week baseline: the average of prior weeks that had any spending.
+        // Week baseline: the average of prior weeks that were tracked — any
+        // spending, or a day explicitly marked "no spending" (which then
+        // counts as the honest 0 it is).
         const buckets = getRecentPeriods("week", today, 9, locale);
         const prior = buckets
           .filter((b) => b.start.getTime() < range.start.getTime())
-          .map(
-            (b) =>
-              totalInBase(
-                store.expenses.filter((e) => isWithinRange(e.date, b)),
-                base,
-                rates
-              ).total
-          )
-          .filter((v) => v > 0);
+          .map((b) => ({
+            total: totalInBase(
+              store.expenses.filter((e) => isWithinRange(e.date, b)),
+              base,
+              rates
+            ).total,
+            tracked: noSpendDays.some((d) => isWithinRange(d, b)),
+          }))
+          .filter((w) => w.total > 0 || w.tracked)
+          .map((w) => w.total);
         if (prior.length > 0) {
           target = prior.reduce((s, v) => s + v, 0) / prior.length;
           targetSource = "average";
@@ -404,7 +447,7 @@ export default function App() {
       rows.push({ period: p, projection, target, targetSource });
     }
     return rows;
-  }, [store.expenses, store.budgets, settings.baseCurrency, rates, locale]);
+  }, [store.expenses, store.budgets, noSpendDays, settings.baseCurrency, rates, locale]);
 
   // All-time daily spend, laid out as the last 26 Monday-start weeks.
   const heatmapGrid = useMemo(
@@ -449,6 +492,8 @@ export default function App() {
     if (entry.kind === "income") store.addIncome(draft);
     else store.addExpense(draft);
   }
+
+  const closeCatchUp = useCallback(() => setCatchUpDays(null), []);
 
   const pill = RATE_PILL[status];
 
@@ -523,6 +568,15 @@ export default function App() {
       </header>
 
       <main className={styles.main}>
+        {missingDays.length > 0 && !catchUpDays && (
+          <CatchUpBanner
+            missing={missingDays}
+            holdingReports={holdingReports}
+            onCatchUp={() => setCatchUpDays(missingDays)}
+            onSkip={skipCatchUp}
+          />
+        )}
+
         <div className={`card ${styles.periodCard}`}>
           <PeriodSelector
             period={period}
@@ -727,6 +781,26 @@ export default function App() {
           baseCurrency={settings.baseCurrency}
           periodLabel={formatPeriodLabel(period, refDate, locale)}
           onClose={() => setDrillCategoryId(null)}
+        />
+      )}
+
+      {catchUpDays && catchUpDays.length > 0 && (
+        <CatchUpSheet
+          days={catchUpDays}
+          expenses={store.expenses}
+          incomes={store.incomes}
+          categories={store.categories}
+          incomeCategories={store.incomeCategories}
+          favorites={favorites}
+          defaultCurrency={settings.baseCurrency}
+          calendar={holidays.calendar}
+          noSpendDays={noSpendDays}
+          onAdd={(kind, data) =>
+            kind === "income" ? store.addIncome(data) : store.addExpense(data)
+          }
+          onDelete={handleDelete}
+          onSetNoSpend={store.setNoSpendDay}
+          onClose={closeCatchUp}
         />
       )}
 

@@ -136,6 +136,19 @@ export interface Settings {
    */
   reportsSince?: string;
   /**
+   * Local "YYYY-MM-DD" days the user explicitly marked as "spent nothing" in
+   * catch-up. They count as logged: they close a gap like an entry would, and
+   * the spending grade's average treats their months as tracked. Optional for
+   * the same reason as everything below — older settings don't have it.
+   */
+  noSpendDays?: string[];
+  /**
+   * Watermark: days on or before this local "YYYY-MM-DD" are never reported
+   * as missing. Set when the user skips a catch-up, so dismissing a gap
+   * accepts it rather than nagging again (and releases the reports held on it).
+   */
+  catchUpSkippedThrough?: string;
+  /**
    * Appearance. All optional: settings saved before theming existed (and JSON
    * backups from then) have no such keys, and `useLocalStorage` doesn't merge
    * defaults into a stored object — so every read site falls back to the

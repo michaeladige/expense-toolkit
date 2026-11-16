@@ -8,7 +8,8 @@ import type {
   ReportPeriod,
   Settings,
 } from "../types";
-import { todayISO } from "../lib/dates";
+import { getRange, todayISO } from "../lib/dates";
+import { rangeHasMissingDay } from "../lib/catchup";
 import { formatMoney } from "../lib/currency";
 import { buildReport, pendingReportPeriods, previousNet } from "../lib/reports";
 import { notify } from "../lib/notify";
@@ -25,6 +26,13 @@ interface Args {
   settings: Settings;
   rates: RateMap;
   rateStatus: RateStatus;
+  /**
+   * Days the user hasn't logged yet and is being asked to catch up on (see
+   * `findMissingDays`). A period containing one is held back: reports are
+   * frozen snapshots, so generating it now would permanently freeze totals
+   * that are about to be filled in.
+   */
+  missingDays: ReadonlySet<string>;
   categoryById: (id: string) => Category | undefined;
   incomeCategoryById: (id: string) => Category | undefined;
   addReports: (list: Report[]) => void;
@@ -72,6 +80,7 @@ export function useAutoReports({
   settings,
   rates,
   rateStatus,
+  missingDays,
   categoryById,
   incomeCategoryById,
   addReports,
@@ -96,6 +105,10 @@ export function useAutoReports({
     for (const period of PERIODS) {
       const refs = pendingReportPeriods(period, reports, settings.reportsSince, now);
       for (const ref of refs) {
+        // Not skipped for good: it stays pending and generates on a later pass,
+        // once the days are logged, marked no-spend, skipped, or aged out of
+        // the catch-up lookback.
+        if (rangeHasMissingDay(getRange(period, ref), missingDays)) continue;
         const report = buildReport({
           period,
           ref,
@@ -129,6 +142,7 @@ export function useAutoReports({
     settings,
     rates,
     rateStatus,
+    missingDays,
     categoryById,
     incomeCategoryById,
     addReports,

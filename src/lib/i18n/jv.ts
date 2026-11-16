@@ -414,6 +414,30 @@ export const jv: TranslationDict = {
     "heatmap.less": "Sithik",
     "heatmap.more": "Akeh",
 
+    // Catch-up
+    "catchUp.title": "Nyusul Cathetan",
+    "catchUp.close": "Tutup nyusul cathetan",
+    "catchUp.progress": ({ done, total }) => `${done} saka ${total} dina wis dicathet`,
+    "catchUp.allDone": "Wis rampung kabeh 🎉",
+    "catchUp.prevDay": "Dina sadurunge",
+    "catchUp.nextDay": "Dina sabanjure",
+    "catchUp.dayOf": ({ n, total }) => `Dina ${n} saka ${total}`,
+    "catchUp.holiday": "Tanggal abang",
+    "catchUp.weekend": "Akhir minggu",
+    "catchUp.auto": "otomatis",
+    "catchUp.remove": "Busak cathetan",
+    "catchUp.markedNoSpend": "✓ Ditandhani ora jajan",
+    "catchUp.undo": "Batalke",
+    "catchUp.noSpend": "Ora jajan",
+    "catchUp.next": "Terus",
+    "catchUp.done": "Rampung",
+    "catchUp.bannerTitle": ({ n }) => `${n} dina bolong ing cathetanmu`,
+    "catchUp.bannerBody": ({ since }) =>
+      `Bolonge wiwit ${since}. Isien saiki mumpung isih eling dhuwite minggat menyang ngendi.`,
+    "catchUp.bannerHeld": "Rapor kanggo periode kuwi ditahan dhisik nganti mbok isi.",
+    "catchUp.start": "Susul",
+    "catchUp.skip": "Skip",
+
     // Mobile nav / menu
     "menu.open": "Menu",
     "menu.jumpTo": "Lompat menyang",
