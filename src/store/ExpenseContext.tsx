@@ -75,6 +75,8 @@ interface ExpenseStore {
   applyRecurring: (rule: RecurringRule, dates: string[]) => void;
 
   updateSettings: (data: Partial<Settings>) => void;
+  /** Mark or unmark a day as "spent nothing" (see `Settings.noSpendDays`). */
+  setNoSpendDay: (date: string, on: boolean) => void;
 
   categoryById: (id: string) => Category | undefined;
   incomeCategoryById: (id: string) => Category | undefined;
@@ -371,6 +373,20 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     [setSettings]
   );
 
+  // Functional update rather than going through updateSettings with a closed-
+  // over array: catch-up taps "No spending" quickly across days, and a stale
+  // closure would drop all but the last mark.
+  const setNoSpendDay = useCallback(
+    (date: string, on: boolean) =>
+      setSettings((prev) => {
+        const have = prev.noSpendDays ?? [];
+        if (on === have.includes(date)) return prev;
+        const next = on ? [...have, date].sort() : have.filter((d) => d !== date);
+        return { ...prev, noSpendDays: next };
+      }),
+    [setSettings]
+  );
+
   const categoryById = useCallback(
     (id: string) => categories.find((c) => c.id === id),
     [categories]
@@ -415,6 +431,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       deleteRecurring,
       applyRecurring,
       updateSettings,
+      setNoSpendDay,
       categoryById,
       incomeCategoryById,
     }),
@@ -451,6 +468,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       deleteRecurring,
       applyRecurring,
       updateSettings,
+      setNoSpendDay,
       categoryById,
       incomeCategoryById,
     ]

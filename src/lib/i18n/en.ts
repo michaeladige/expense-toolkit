@@ -414,6 +414,30 @@ export const en: TranslationDict = {
     "heatmap.less": "Less",
     "heatmap.more": "More",
 
+    // Catch-up
+    "catchUp.title": "Catch up",
+    "catchUp.close": "Close catch-up",
+    "catchUp.progress": ({ done, total }) => `${done} of ${total} days logged`,
+    "catchUp.allDone": "All caught up 🎉",
+    "catchUp.prevDay": "Previous day",
+    "catchUp.nextDay": "Next day",
+    "catchUp.dayOf": ({ n, total }) => `Day ${n} of ${total}`,
+    "catchUp.holiday": "Public holiday",
+    "catchUp.weekend": "Weekend",
+    "catchUp.auto": "auto",
+    "catchUp.remove": "Remove entry",
+    "catchUp.markedNoSpend": "✓ Marked as no spending",
+    "catchUp.undo": "Undo",
+    "catchUp.noSpend": "No spending",
+    "catchUp.next": "Next",
+    "catchUp.done": "Done",
+    "catchUp.bannerTitle": ({ n }) => `${n} days missing from your log`,
+    "catchUp.bannerBody": ({ since }) =>
+      `Gaps starting ${since}. Fill them in while you still remember where the money went.`,
+    "catchUp.bannerHeld": "Reports for those periods are on hold until you do.",
+    "catchUp.start": "Catch up",
+    "catchUp.skip": "Skip",
+
     // Mobile nav / menu
     "menu.open": "Menu",
     "menu.jumpTo": "Jump to",

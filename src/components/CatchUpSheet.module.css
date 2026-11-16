@@ -1,0 +1,322 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  /* Above .toast-stack (50): on a phone the report toast would otherwise sit
+     right on top of the action bar. */
+  z-index: 55;
+}
+
+/* Desktop: a centered dialog. Mobile (below): a full-screen sheet sized to the
+   visual viewport so the footer rides above the on-screen keyboard. */
+.sheet {
+  position: fixed;
+  z-index: 56;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 94vw);
+  height: min(760px, 92vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+}
+
+.header {
+  padding: 0.9rem 1rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.headTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.progress > span {
+  display: block;
+  height: 100%;
+  background: var(--success);
+  transition: width 0.2s ease;
+}
+.progressLabel {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Horizontally scrolling day picker — one tap to jump to any day. */
+.strip {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 0.15rem 0 0.3rem;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.strip::-webkit-scrollbar {
+  display: none;
+}
+.dayChip {
+  flex: 0 0 auto;
+  width: 2.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  padding: 0.3rem 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.dayChip small {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.dayChip i {
+  font-style: normal;
+  font-size: 0.65rem;
+  height: 0.8rem;
+  color: var(--success);
+}
+.dayChipDone {
+  border-color: color-mix(in srgb, var(--success) 50%, var(--border));
+}
+.dayChipActive {
+  border-color: var(--primary);
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dayNav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dayNav > button {
+  font-size: 1.2rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+.dayTitle {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.dayTitle strong {
+  font-size: 1.05rem;
+}
+.dayMeta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  justify-content: center;
+  gap: 0.4rem;
+}
+.tag {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--warning);
+}
+
+.entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.3rem 0.3rem 0.6rem;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+.entryName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.auto {
+  margin-left: 0.4rem;
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 0.4rem;
+}
+.income {
+  color: var(--success);
+}
+
+.noSpendNote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.favorites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.favoriteChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.kindToggle {
+  display: flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 3px;
+}
+.kindBtn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0.4rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.kindActive {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-height: 3.6rem;
+  padding: 0.4rem 0.2rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.tileActive {
+  border-color: var(--cat);
+  background: color-mix(in srgb, var(--cat) 18%, var(--surface));
+  outline: 2px solid var(--cat);
+  outline-offset: -2px;
+}
+.tileIcon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.tileName {
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.amountRow {
+  display: grid;
+  grid-template-columns: 1fr 6rem;
+  gap: 0.5rem;
+}
+/* 16px+ stops iOS Safari from zooming the page when an input is focused. */
+.amountRow :global(.input),
+.amountRow :global(.select),
+.body > :global(.input) {
+  font-size: 1rem;
+}
+
+.footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.footer > button {
+  min-height: 2.75rem;
+}
+
+@media (max-width: 560px) {
+  .sheet {
+    left: 0;
+    right: 0;
+    top: var(--vvtop, 0px);
+    transform: none;
+    width: 100%;
+    height: var(--vvh, 100dvh);
+    border-radius: 0;
+    border: none;
+  }
+}

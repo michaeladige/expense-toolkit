@@ -415,6 +415,30 @@ export const id: TranslationDict = {
     "heatmap.less": "Sedikit",
     "heatmap.more": "Banyak",
 
+    // Catch-up
+    "catchUp.title": "Kejar Ketinggalan",
+    "catchUp.close": "Tutup kejar ketinggalan",
+    "catchUp.progress": ({ done, total }) => `${done} dari ${total} hari udah dicatat`,
+    "catchUp.allDone": "Udah kelar semua 🎉",
+    "catchUp.prevDay": "Hari sebelumnya",
+    "catchUp.nextDay": "Hari berikutnya",
+    "catchUp.dayOf": ({ n, total }) => `Hari ${n} dari ${total}`,
+    "catchUp.holiday": "Tanggal merah",
+    "catchUp.weekend": "Akhir pekan",
+    "catchUp.auto": "otomatis",
+    "catchUp.remove": "Hapus catatan",
+    "catchUp.markedNoSpend": "✓ Ditandai gak jajan",
+    "catchUp.undo": "Batalin",
+    "catchUp.noSpend": "Gak jajan",
+    "catchUp.next": "Lanjut",
+    "catchUp.done": "Kelar",
+    "catchUp.bannerTitle": ({ n }) => `${n} hari bolong di catatanmu`,
+    "catchUp.bannerBody": ({ since }) =>
+      `Bolongnya mulai ${since}. Isi sekarang selagi masih inget duitnya ke mana.`,
+    "catchUp.bannerHeld": "Rapor buat periode itu ditahan dulu sampai kamu isi.",
+    "catchUp.start": "Kejar",
+    "catchUp.skip": "Skip",
+
     // Mobile nav / menu
     "menu.open": "Menu",
     "menu.jumpTo": "Lompat ke",

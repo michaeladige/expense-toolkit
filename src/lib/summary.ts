@@ -73,6 +73,33 @@ export function totalsByMonthInBase(
   return out;
 }
 
+/**
+ * Average monthly spend over the months before `beforeKey` ("YYYY-MM") that
+ * were tracked, or null if none were. A month counts as tracked when it has
+ * an expense *or* a day explicitly marked "no spending" — so a month you
+ * really did spend nothing in averages in as 0 instead of being ignored as if
+ * you'd never opened the app. The spending grade and the month forecast both
+ * use this, so they always agree on the target.
+ */
+export function priorMonthAverageInBase(
+  expenses: Entry[],
+  noSpendDays: readonly string[],
+  beforeKey: string,
+  base: string,
+  rates: RateMap
+): number | null {
+  const totals = totalsByMonthInBase(expenses, base, rates);
+  for (const d of noSpendDays) {
+    const key = d.slice(0, 7);
+    if (!(key in totals)) totals[key] = 0;
+  }
+  const prior = Object.entries(totals)
+    .filter(([key]) => key < beforeKey)
+    .map(([, v]) => v);
+  if (prior.length === 0) return null;
+  return prior.reduce((s, v) => s + v, 0) / prior.length;
+}
+
 export interface CategoryDelta {
   categoryId: string;
   current: number;
